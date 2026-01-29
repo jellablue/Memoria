@@ -150,7 +150,6 @@ class JellyJams {
     if (index >= 0 && index < this.jellies.length) {
       this.jellies[index].active = true;
       this.jellies[index].animTimer = 0;
-      // playNote(index);
     }
   }
 
