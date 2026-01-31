@@ -13,7 +13,7 @@ let gameJellyJams;
 let state = "MENU"; 
 let menuButtons = [];
 
-let jellySound;
+//let jellySound;
 
 function setup() {
   console.log("Setup started");
@@ -132,9 +132,9 @@ function drawBackButton() {
   pop();
 }
 
-function preload() {
-  jellySound = loadSound('assets/jelly_sound.mp3');
-}
+// function preload() {
+//   jellySound = loadSound('assets/jelly-click.mp3');
+// }
 
 class MenuButton {
   constructor(x, y, w, h, label, col, action) {

@@ -14,6 +14,24 @@ class JellyJams {
     this.playbackTimer = 0;
     this.playbackSpeed = 60;
 
+    this.osc = new p5.Oscillator("sine");
+    this.osc.amp(0);
+    this.osc.start();
+
+    this.notes = [
+      261.63, 293.66, 329.63, 349.23, 392.0, 440.0, 493.88, 523.25, 587.33,
+    ];
+
+    this.blu = {
+      x: width / 2,
+      y: height / 2,
+      targetX: width / 2,
+      targetY: height / 2,
+      size: 40,
+    };
+
+    this.standbyPos = { x: 100, y: height - 100 };
+
     this.initGrid();
   }
 
@@ -50,7 +68,9 @@ class JellyJams {
 
   draw() {
     this.handleLogic();
+    this.updateBlu();
     this.drawVisuals();
+    this.drawBlu();
   }
 
   handleLogic() {
@@ -146,10 +166,21 @@ class JellyJams {
     console.log("New Sequence: " + this.sequence);
   }
 
-  activateJelly(index) {
+  activateJelly(index, isPlayerClick = false) {
     if (index >= 0 && index < this.jellies.length) {
       this.jellies[index].active = true;
       this.jellies[index].animTimer = 0;
+
+      if (this.gameState === "WATCH") {
+        this.blu.targetX = this.jellies[index].x + this.jellies[index].w/2;
+        this.blu.targetY = this.jellies[index].y + this.jellies[index].h/2 - 20;
+      }
+
+      if (this.osc) {
+        this.osc.freq(this.notes[index], 0.1);
+        this.osc.amp(0.5, 0.05);
+        this.osc.amp(0, 0.2, 0.1);
+      }
     }
   }
 
@@ -166,7 +197,7 @@ class JellyJams {
     if (this.gameState === "INPUT") {
       for (let i = 0; i < this.jellies.length; i++) {
         if (this.isHovering(i)) {
-          this.activateJelly(i);
+          this.activateJelly(i, true);
 
           if (i === this.sequence[this.playerStep]) {
             this.playerStep++;
@@ -200,5 +231,52 @@ class JellyJams {
     return (
       mouseX > j.x && mouseX < j.x + j.w && mouseY > j.y && mouseY < j.y + j.h
     );
+  }
+
+  updateBlu() {
+    if (this.gameState === "IDLE") {
+      this.blu.targetX = width / 2;
+      this.blu.targetY = height / 2;
+    } else if (this.gameState === "INPUT" || this.gameState === "SUCCESS") {
+      this.blu.targetX = this.standbyPos.x;
+      this.blu.targetY = this.standbyPos.y;
+    }
+
+    this.blu.x = lerp(this.blu.x, this.blu.targetX, 0.15);
+    this.blu.y = lerp(this.blu.y, this.blu.targetY, 0.15);
+  }
+
+  drawBlu() {
+    push();
+    translate(this.blu.x, this.blu.y);
+
+    noStroke();
+    fill(0, 50);
+    ellipse(0, 20, 30, 10);
+
+    let jumpHeight = dist(
+      this.blu.x,
+      this.blu.y,
+      this.blu.targetX,
+      this.blu.targetY,
+    );
+    let bounce = min(jumpHeight * 0.5, 50);
+
+    fill(50, 100, 255);
+    ellipse(0, -bounce, this.blu.size, this.blu.size);
+
+    fill(255);
+    ellipse(-8, -5 - bounce, 12, 12);
+    ellipse(8, -5 - bounce, 12, 12);
+    fill(0);
+    ellipse(-8, -5 - bounce, 5, 5);
+    ellipse(8, -5 - bounce, 5, 5);
+
+    noFill();
+    stroke(0);
+    strokeWeight(2);
+    arc(0, 5 - bounce, 10, 5, 0, PI);
+
+    pop();
   }
 }
