@@ -115,9 +115,15 @@ class JellyJams {
       textSize(24);
       text("Watch Blu...", width / 2, 50);
     } else if (this.gameState === "INPUT") {
-      fill(PALETTE.green);
-      textSize(24);
-      text("Your Turn!", width / 2, 50);
+      if (this.isReverse) {
+        fill(PALETTE.pink); // Use a warning color
+        textSize(24);
+        text("REVERSE! (Backwards)", width / 2, 50);
+      } else {
+        fill(PALETTE.green);
+        textSize(24);
+        text("Your Turn!", width / 2, 50);
+      }
     } else if (this.gameState === "GAMEOVER") {
       fill("red");
       textSize(24);
@@ -150,6 +156,12 @@ class JellyJams {
     this.sequence = [];
     this.score = 0;
     this.playerStep = 0;
+
+    let startCount = difficultyParams.jellyStartLength - 1;
+    for (let i=0; i < startCount; i++) {
+        this.sequence.push(floor(random(0, 9)));
+    }
+
     this.nextRound();
   }
 
@@ -157,11 +169,20 @@ class JellyJams {
     let nextStep = floor(random(0, 9));
     this.sequence.push(nextStep);
 
+    if (this.score >= 3 && random() < difficultyParams.jellyTwistChance) {
+      this.isReverse = true;
+    } else {
+      this.isReverse = false;
+    }
+
     this.gameState = "WATCH";
     this.playerStep = 0;
     this.playbackIndex = 0;
     this.playbackTimer = -30;
     this.playbackSpeed = max(30, 60 - this.sequence.length * 2);
+
+    let baseSpeed = difficultyParams.jellySpeed;
+    this.playbackSpeed = max(10, baseSpeed - (this.sequence.length * 1.5))
 
     console.log("New Sequence: " + this.sequence);
   }
@@ -172,8 +193,9 @@ class JellyJams {
       this.jellies[index].animTimer = 0;
 
       if (this.gameState === "WATCH") {
-        this.blu.targetX = this.jellies[index].x + this.jellies[index].w/2;
-        this.blu.targetY = this.jellies[index].y + this.jellies[index].h/2 - 20;
+        this.blu.targetX = this.jellies[index].x + this.jellies[index].w / 2;
+        this.blu.targetY =
+          this.jellies[index].y + this.jellies[index].h / 2 - 20;
       }
 
       if (this.osc) {
@@ -199,16 +221,25 @@ class JellyJams {
         if (this.isHovering(i)) {
           this.activateJelly(i, true);
 
-          if (i === this.sequence[this.playerStep]) {
+          let expectedIndex;
+
+          if (this.isReverse) {
+            expectedIndex =
+              this.sequence[this.sequence.length - 1 - this.playerStep];
+          } else {
+            expectedIndex = this.sequence[this.playerStep];
+          }
+
+          if (i === expectedIndex) {
             this.playerStep++;
 
             if (this.playerStep >= this.sequence.length) {
               this.score++;
-              console.log("Your step is correct: " + i);
               this.gameState = "SUCCESS";
-              // SUCCESS SOUND
-              setTimeout(() => this.nextRound(), 1000);
-              return;
+
+              setTimeout(() => {
+                if (state === "GAME_B") this.nextRound();
+              }, 1000);
             }
           } else {
             console.log(
@@ -250,10 +281,12 @@ class JellyJams {
     push();
     translate(this.blu.x, this.blu.y);
 
+    // --- 1. SHADOW (Always stays on the ground) ---
     noStroke();
     fill(0, 50);
     ellipse(0, 20, 30, 10);
 
+    // --- 2. CALCULATE BOUNCE ---
     let jumpHeight = dist(
       this.blu.x,
       this.blu.y,
@@ -262,20 +295,52 @@ class JellyJams {
     );
     let bounce = min(jumpHeight * 0.5, 50);
 
-    fill(50, 100, 255);
-    ellipse(0, -bounce, this.blu.size, this.blu.size);
+    // Apply the bounce to the drawing context
+    translate(0, -bounce);
 
+    // --- 3. REWIND REMIX VISUAL CUE (The "Dizzy" Twist) ---
+    // If the game is in Reverse Mode, make Blu wobble!
+    if (this.isReverse) {
+      rotate(sin(frameCount * 0.2) * 0.5); // Wobble back and forth
+
+      // Optional: Add tiny "confused" marks
+      fill(PALETTE.pink);
+      ellipse(20, -20, 8, 8);
+      ellipse(-20, 10, 5, 5);
+    }
+
+    // --- 4. DRAW BLU (Body) ---
+    // Change color to Purple if Reverse, otherwise Blue
+    if (this.isReverse) fill(PALETTE.purple);
+    else fill(50, 100, 255);
+
+    ellipse(0, 0, this.blu.size, this.blu.size);
+
+    // Eyes
     fill(255);
-    ellipse(-8, -5 - bounce, 12, 12);
-    ellipse(8, -5 - bounce, 12, 12);
+    ellipse(-8, -5, 12, 12);
+    ellipse(8, -5, 12, 12);
     fill(0);
-    ellipse(-8, -5 - bounce, 5, 5);
-    ellipse(8, -5 - bounce, 5, 5);
 
+    // If Dizzy, make pupils wander
+    if (this.isReverse) {
+      ellipse(-8 + sin(frameCount * 0.5) * 3, -5, 4, 4); // Crazy eyes
+      ellipse(8 - sin(frameCount * 0.5) * 3, -5, 4, 4);
+    } else {
+      ellipse(-8, -5, 5, 5);
+      ellipse(8, -5, 5, 5);
+    }
+
+    // Mouth
     noFill();
     stroke(0);
     strokeWeight(2);
-    arc(0, 5 - bounce, 10, 5, 0, PI);
+    // If Dizzy, mouth is a straight line or open 'O'
+    if (this.isReverse) {
+      ellipse(0, 5, 10, 10); // 'O' mouth
+    } else {
+      arc(0, 5, 10, 5, 0, PI); // Smile
+    }
 
     pop();
   }
