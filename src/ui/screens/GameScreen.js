@@ -6,16 +6,15 @@ class GameScreen {
 
     this.summaryCard    = null;
     this._scoreReported = false;
-    
-    this.backBtnScale = 1.0; // Added for bouncy animation
+
+    this.backBtnScale = 1.0;
 
     if (gameState.showInstructions) {
       this.instructionOverlay = new InstructionOverlay(gameState.currentInstructionKey);
     }
   }
 
-  // [ _createGameInstance, _resetGameInstance, prepareForEntry, _getGameKey, _getSessionScore, _checkAndCreateSummaryCard, _restartGame remain exactly the same ]
-  
+
   _createGameInstance() {
     let newGame = null;
     if (this.gameType === "GAME_A") newGame = new KaleidoPop(gameState.difficultyParams);
@@ -67,7 +66,6 @@ class GameScreen {
       const sessionScore = this._getSessionScore();
       const gameKey      = this._getGameKey();
       try {
-        // Assume SummaryCard class is defined elsewhere
         this.summaryCard = new SummaryCard(gameKey, sessionScore);
         if (typeof starBank !== 'undefined') {
           starBank.addStars(sessionScore);
@@ -87,12 +85,10 @@ class GameScreen {
   }
 
   draw() {
-    // Soft, pleasing background colors
-    if (this.gameType === "GAME_A") background("#F4F7FB"); // Softer blue-grey
-    else if (this.gameType === "GAME_B") background("#FFF9F2"); 
-    else if (this.gameType === "GAME_C") background("#F2FCF5"); 
+    if (this.gameType === "GAME_A") background("#F4F7FB");
+    else if (this.gameType === "GAME_B") background("#FFF9F2");
+    else if (this.gameType === "GAME_C") background("#F2FCF5");
 
-    // Always restore default cursor at the start of the frame
     cursor(ARROW);
 
     if (this.game && !gameState.showInstructions) {
@@ -113,32 +109,30 @@ class GameScreen {
   }
 
   drawBackButton() {
-    // Use consistent responsive anchoring
-    let cx = max(40, width * 0.05); 
+    let cx = max(40, width * 0.05);
     let cy = max(40, height * 0.06);
-    let r = 24; 
+    let r = 24;
     let hover = dist(mouseX, mouseY, cx, cy) < r;
-    
-    // Smooth lerping scale
+
     this.backBtnScale = lerp(this.backBtnScale, hover ? 1.15 : 1.0, 0.2);
 
     push();
     translate(cx, cy);
-    scale(this.backBtnScale); 
+    scale(this.backBtnScale);
 
     drawingContext.shadowBlur = hover ? 15 : 5;
     drawingContext.shadowColor = 'rgba(0,0,0,0.15)';
     noStroke();
-    fill(255); 
+    fill(255);
     circle(0, 0, r * 2);
-    drawingContext.shadowBlur = 0; 
+    drawingContext.shadowBlur = 0;
 
-    stroke(hover ? (PALETTE?.pink || '#FFB7B2') : 100); 
+    stroke(hover ? (PALETTE?.pink || '#FFB7B2') : 100);
     strokeWeight(4);
     strokeCap(ROUND);
     strokeJoin(ROUND);
     noFill();
-    
+
     beginShape();
     vertex(4, -8);
     vertex(-4, 0);
@@ -164,7 +158,7 @@ class GameScreen {
         gameState.hideGameInstructions();
         return true;
       }
-      return true; 
+      return true;
     }
 
     let cx = max(40, width * 0.05);
@@ -190,7 +184,7 @@ class GameScreen {
       if (this.gameType === "GAME_A" && this.game.checkClick) this.game.checkClick();
       else if (this.gameType === "GAME_B" && this.game.checkClick) this.game.checkClick();
       else if (this.gameType === "GAME_C" && this.game.handleMouseClick) this.game.handleMouseClick();
-      
+
       this._checkAndCreateSummaryCard();
     }
     return true;

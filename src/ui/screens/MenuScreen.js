@@ -4,11 +4,10 @@ class MenuScreen {
     this.layout = {};
     this._lastW = -1;
     this._lastH = -1;
-    
-    // Animation states for UI elements
+
     this.backBtnScale = 1.0;
     this.profileBtnScale = 1.0;
-    
+
     this.initButtons();
   }
 
@@ -17,8 +16,7 @@ class MenuScreen {
     const pad = constrain(width * 0.02, 10, 24);
     const cardW = constrain(width * (isNarrow ? 0.8 : 0.28), 260, 340);
     const cardH = constrain(height * 0.35, 240, 280);
-    
-    // On narrow screens, place it at the bottom center. On wide screens, top right.
+
     const x = isNarrow ? (width / 2 - cardW / 2) : (width - cardW - pad);
     const y = isNarrow ? (height - cardH - pad) : pad;
 
@@ -30,13 +28,12 @@ class MenuScreen {
 
     const base = min(width, height);
     const m = this._getStarCardMetrics();
-    
+
     const btnW = constrain(width * 0.36, 260, 380);
     const btnH = constrain(height * 0.12, 76, 96);
     const gap = constrain(height * 0.03, 16, 26);
-    
-    // Shift content left on desktop to balance the Star Bank on the right
-    const centerX = m.isNarrow ? width / 2 : width * 0.4; 
+
+    const centerX = m.isNarrow ? width / 2 : width * 0.4;
 
     this.layout = {
       btnW,
@@ -56,7 +53,6 @@ class MenuScreen {
   }
 
   initButtons() {
-    // Failsafe if layout hasn't synced
     if (!this.layout.btnW) this._syncLayout();
 
     let { btnW, btnH, gap, startY, centerX } = this.layout;
@@ -82,11 +78,9 @@ class MenuScreen {
 
   draw() {
     this._syncLayout();
-    
-    // Default cursor (buttons will override if hovered)
+
     cursor(ARROW);
 
-    // --- 1. Typography (Header) ---
     drawingContext.shadowBlur = 15;
     drawingContext.shadowColor = "rgba(255, 255, 255, 0.7)";
     fill(PALETTE?.text || 60);
@@ -94,19 +88,17 @@ class MenuScreen {
     textStyle(BOLD);
     textAlign(CENTER, CENTER);
     text("Choose an Activity", this.layout.centerX, this.layout.titleY);
-    drawingContext.shadowBlur = 0; // Reset shadow
+    drawingContext.shadowBlur = 0;
 
     textSize(this.layout.subtitleSize);
     fill(120);
     textStyle(NORMAL);
     text("Train your brain with Blu!", this.layout.centerX, this.layout.subtitleY);
 
-    // --- 2. Main Menu Buttons ---
     for (let btn of this.menuButtons) {
       if (btn.display) btn.display();
     }
 
-    // --- 3. UI Elements ---
     this.drawStarBank();
     this.drawBackButton();
   }
@@ -115,7 +107,7 @@ class MenuScreen {
     const m = this._getStarCardMetrics();
     return {
       x: m.x + m.cardW * 0.05,
-      y: m.y + m.cardH * 0.8, // Proportional anchoring
+      y: m.y + m.cardH * 0.8,
       w: m.cardW * 0.9,
       h: m.cardH * 0.15,
     };
@@ -129,30 +121,27 @@ class MenuScreen {
 
   drawStarBank() {
     const m = this._getStarCardMetrics();
-    
-    // Gentle floating animation
-    let floatY = sin(frameCount * 0.03) * 4;
-    
-    push();
-    translate(0, floatY); // Apply float to the whole card
 
-    // --- Card Background (Glassmorphism) ---
+    let floatY = sin(frameCount * 0.03) * 4;
+
+    push();
+    translate(0, floatY);
+
     drawingContext.shadowBlur = 20;
     drawingContext.shadowColor = "rgba(0,0,0,0.1)";
-    fill(255, 220); // Semi-transparent white
-    stroke(255); // Solid white border for glass effect
+    fill(255, 220);
+    stroke(255);
     strokeWeight(2);
     rect(m.x, m.y, m.cardW, m.cardH, 20);
     drawingContext.shadowBlur = 0;
     noStroke();
 
-    // --- Grand Total Row ---
     const rowY = m.y + m.cardH * 0.15;
     textAlign(LEFT, CENTER);
     textStyle(BOLD);
     textSize(constrain(m.cardW * 0.1, 24, 34));
     fill("#E6A817");
-    text("⭐", m.x + m.cardW * 0.08, rowY + m.cardH * 0.02);
+    text("Ã¢Â­Â", m.x + m.cardW * 0.08, rowY + m.cardH * 0.02);
 
     textSize(constrain(m.cardW * 0.09, 20, 28));
     fill(60);
@@ -163,25 +152,23 @@ class MenuScreen {
     fill(120);
     text("total stars", m.x + m.cardW * 0.25, rowY + m.cardH * 0.09);
 
-    // --- Level Badge ---
     const badgeY = rowY + m.cardH * 0.22;
     const badgeW = m.cardW * 0.84;
     const badgeX = m.x + m.cardW * 0.08;
-    
+
     fill(typeof starBank !== 'undefined' ? starBank.getLevelBadgeColor() : PALETTE?.pink || '#FFB7B2');
     rect(badgeX, badgeY - m.cardH * 0.05, badgeW, m.cardH * 0.12, 12);
-    
+
     fill(60);
     textSize(constrain(m.cardW * 0.05, 12, 16));
     textStyle(BOLD);
     textAlign(CENTER, CENTER);
     text(typeof starBank !== 'undefined' ? starBank.getLevel() : "Level 1", badgeX + badgeW / 2, badgeY + m.cardH * 0.01);
 
-    // --- Per-Game Records ---
     const records = [
-      { label: "🌸 Kaleido", val: typeof starBank !== 'undefined' ? starBank.kaleidoRecord : 0 },
-      { label: "🎵 Jelly",   val: typeof starBank !== 'undefined' ? starBank.jellyRecord : 0 },
-      { label: "👣 Tiptoe",  val: typeof starBank !== 'undefined' ? starBank.tiptoeRecord : 0 },
+      { label: "Ã°Å¸Å’Â¸ Kaleido", val: typeof starBank !== 'undefined' ? starBank.kaleidoRecord : 0 },
+      { label: "Ã°Å¸Å½Âµ Jelly",   val: typeof starBank !== 'undefined' ? starBank.jellyRecord : 0 },
+      { label: "Ã°Å¸â€˜Â£ Tiptoe",  val: typeof starBank !== 'undefined' ? starBank.tiptoeRecord : 0 },
     ];
 
     const recStartY = badgeY + m.cardH * 0.15;
@@ -200,7 +187,6 @@ class MenuScreen {
       text(records[i].val, rx, recStartY + m.cardH * 0.08);
     }
 
-    // --- Divider Line ---
     stroke(230);
     strokeWeight(2);
     strokeCap(ROUND);
@@ -208,21 +194,19 @@ class MenuScreen {
     line(m.x + m.cardW * 0.08, lineY, m.x + m.cardW * 0.92, lineY);
     noStroke();
 
-    // --- Brain Profile Button ---
     const b = this._brainBtnBounds();
     const hoverB = this._isHoverBrainBtn();
-    
-    // Smooth scaling for button
+
     this.profileBtnScale = lerp(this.profileBtnScale, hoverB ? 1.05 : 1.0, 0.2);
-    
+
     push();
-    translate(b.x + b.w / 2, b.y + b.h / 2); // Translate to center of button for scaling
+    translate(b.x + b.w / 2, b.y + b.h / 2);
     scale(this.profileBtnScale);
-    
+
     fill(hoverB ? (PALETTE?.purple || "#9B5DE5") : "#F0F0F5");
     rectMode(CENTER);
     rect(0, 0, b.w, b.h, 12);
-    
+
     fill(hoverB ? 255 : (PALETTE?.purple || "#9B5DE5"));
     textSize(constrain(m.cardW * 0.045, 12, 15));
     textStyle(BOLD);
@@ -231,34 +215,34 @@ class MenuScreen {
     pop();
 
     if (hoverB) cursor(HAND);
-    pop(); // End main floating translation
+    pop();
   }
 
   drawBackButton() {
-    let cx = max(40, width * 0.05); 
+    let cx = max(40, width * 0.05);
     let cy = max(40, height * 0.06);
-    let r = 24; 
+    let r = 24;
     let hover = dist(mouseX, mouseY, cx, cy) < r;
-    
+
     this.backBtnScale = lerp(this.backBtnScale, hover ? 1.15 : 1.0, 0.2);
 
     push();
     translate(cx, cy);
-    scale(this.backBtnScale); 
+    scale(this.backBtnScale);
 
     drawingContext.shadowBlur = hover ? 15 : 5;
     drawingContext.shadowColor = 'rgba(0,0,0,0.15)';
     noStroke();
-    fill(255); 
+    fill(255);
     circle(0, 0, r * 2);
-    drawingContext.shadowBlur = 0; 
+    drawingContext.shadowBlur = 0;
 
-    stroke(hover ? (PALETTE?.pink || '#FFB7B2') : 100); 
+    stroke(hover ? (PALETTE?.pink || '#FFB7B2') : 100);
     strokeWeight(4);
     strokeCap(ROUND);
     strokeJoin(ROUND);
     noFill();
-    
+
     beginShape();
     vertex(4, -8);
     vertex(-4, 0);
@@ -272,15 +256,13 @@ class MenuScreen {
   handleClick() {
     let cx = max(40, width * 0.05);
     let cy = max(40, height * 0.06);
-    
-    // Check back button
+
     if (dist(mouseX, mouseY, cx, cy) < 24) {
       gameState.setScreen(GAME_STATES.AGE_SELECT);
       if (typeof audioManager !== 'undefined') audioManager.playSound("petal");
       return true;
     }
 
-    // Check menu buttons
     for (let btn of this.menuButtons) {
       if (btn.isClicked && btn.isClicked()) {
         if (typeof audioManager !== 'undefined') audioManager.playSound("petal");
@@ -290,12 +272,9 @@ class MenuScreen {
       }
     }
 
-    // Brain Profile button
-    // Note: Adjust mouse check to account for the floatY animation offset if necessary
-    // But since the button hitbox is relatively large, the 4px drift usually isn't an issue.
     if (this._isHoverBrainBtn()) {
       if (typeof audioManager !== 'undefined') audioManager.playSound("petal");
-      gameState.setScreen(GAME_STATES.RESULTS); // Assuming RESULTS is your profile screen
+      gameState.setScreen(GAME_STATES.RESULTS);
       return true;
     }
 

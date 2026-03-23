@@ -1,10 +1,3 @@
-// ============================================
-// STAR BANK — Central Score Manager (Grand Total)
-// ============================================
-//
-// Instead of having scores scattered across individual game instances,
-// starBank is the single source of truth for all earned stars and records.
-// It's also prepped for easy localStorage persistence later.
 
 const starBank = {
   totalStars:    0,
@@ -12,18 +5,10 @@ const starBank = {
   jellyRecord:   0,
   tiptoeRecord:  0,
 
-  // Max reference scores per game — used to normalise to 0-100 %
-  // Kaleido-Pop  → Visual   (Binding)
-  // Jelly Jams   → Auditory (Sequencing)
-  // Tiptoe Trails→ Spatial  (Mapping)
   COGNITIVE_CAP: { kaleido: 200, jelly: 150, tiptoe: 150 },
 
-  // Pop animation state for Blu's "+N ⭐" burst
   popAnim: { active: false, timer: 0, amount: 0, x: 0, y: 0 },
 
-  // ------------------------------------------
-  // Add stars and trigger the pop animation
-  // ------------------------------------------
   addStars(amount) {
     this.totalStars += amount;
     this.popAnim = {
@@ -35,22 +20,15 @@ const starBank = {
     };
   },
 
-  // ------------------------------------------
-  // Update per-game record; returns true if new record
-  // gameKey: "kaleido" | "jelly" | "tiptoe"
-  // ------------------------------------------
   updateRecord(gameKey, score) {
     const key = gameKey + "Record";
     if (this[key] !== undefined && score > this[key]) {
       this[key] = score;
-      return true; // new personal best!
+      return true;
     }
     return false;
   },
 
-  // ------------------------------------------
-  // Player level based on lifetime stars
-  // ------------------------------------------
   getLevel() {
     if (this.totalStars < 1000) return "Newbie";
     if (this.totalStars < 5000) return "Explorer";
@@ -58,15 +36,11 @@ const starBank = {
   },
 
   getLevelBadgeColor() {
-    if (this.totalStars < 1000) return "#AEC6CF"; // blue
-    if (this.totalStars < 5000) return "#C1E1C1"; // green
-    return "#FDFD96";                             // gold
+    if (this.totalStars < 1000) return "#AEC6CF";
+    if (this.totalStars < 5000) return "#C1E1C1";
+    return "#FDFD96";
   },
 
-  // ------------------------------------------
-  // Draw the floating "+N ⭐" pop animation.
-  // Call this once per frame from the active screen.
-  // ------------------------------------------
   drawPopAnim() {
     if (!this.popAnim.active) return;
 
@@ -92,11 +66,6 @@ const starBank = {
     pop();
   },
 
-  // ------------------------------------------
-  // Cognitive percentages derived from records
-  // Each game's best score maps to one cognitive faculty.
-  // Returns { visual, auditory, spatial } all in 0–100 range.
-  // ------------------------------------------
   getCognitiveScores() {
     const cap = this.COGNITIVE_CAP;
     return {
@@ -106,9 +75,6 @@ const starBank = {
     };
   },
 
-  // ------------------------------------------
-  // Full reset (e.g. new session / new player)
-  // ------------------------------------------
   reset() {
     this.totalStars    = 0;
     this.kaleidoRecord = 0;

@@ -3,7 +3,7 @@ class KaleidoPop extends Game {
     super(difficultyParams);
     this.gameState = "MEMORIZE";
     this.timer = 3 * 60;
-    this.timerMax = 3 * 60; // Store max for the progress bar
+    this.timerMax = 3 * 60;
     this.totalScore = 0;
 
     this.palette = ["#B5CDF5", "#A0EACD", "#F6C0D9", "#FFFFE0", "#FFD580"];
@@ -15,7 +15,7 @@ class KaleidoPop extends Game {
     this.selectedBrushColor = this.palette[0];
     this.currentRotation = 0;
     this.rotationSpeed = this.difficultyParams.petalSpeed || 0.002;
-    
+
     this.showMilestoneOverlay = false;
     this.milestoneMessage = "";
     this.rotationSpeedMultiplier = 1;
@@ -32,7 +32,7 @@ class KaleidoPop extends Game {
     let numPetals = minP + floor((this.level - 1) / 5);
     let angleStep = TWO_PI / numPetals;
 
-    let petalRadius = 225 - this.level * 4.5; 
+    let petalRadius = 225 - this.level * 4.5;
     petalRadius = max(petalRadius, 120);
 
     let colorBag = [];
@@ -44,9 +44,9 @@ class KaleidoPop extends Game {
 
     for (let i = 0; i < numPetals; i++) {
       this.petals.push({
-        angle: i * angleStep, 
-        targetColor: colorBag[i], 
-        inputColor: null, 
+        angle: i * angleStep,
+        targetColor: colorBag[i],
+        inputColor: null,
         radius: petalRadius,
       });
     }
@@ -59,7 +59,7 @@ class KaleidoPop extends Game {
 
       for (let p of this.petals) {
         if (p.inputColor === p.targetColor) {
-          roundPoints += 1; 
+          roundPoints += 1;
           correctCount++;
         }
       }
@@ -85,22 +85,22 @@ class KaleidoPop extends Game {
     let timeBonus = floor((this.level - 1) / 5) * 2;
     this.timerMax = (baseMemoSeconds + timeBonus) * 60;
     this.timer = this.timerMax;
-    
+
     this.petals = [];
     this.currentRotation = 0;
-    
+
     if (this.level % 5 === 1 && this.level > 1) {
       this.showMilestoneOverlay = true;
       this.milestoneMessage = "Great memory! Let's add more petals.";
     }
-    
+
     let rotationStartLevel = this.getRotationStartLevel();
     if (this.level >= rotationStartLevel) {
       let speedIncreaseCount = floor((this.level - rotationStartLevel) / 5);
       this.rotationSpeedMultiplier = pow(1.2, speedIncreaseCount);
       this.rotationSpeed = (this.difficultyParams.petalSpeed || 0.002) * this.rotationSpeedMultiplier;
     }
-    
+
     if (this.level > 10) {
       let extraColorsNeeded = floor((this.level - 11) / 5) + 1;
       let targetPaletteSize = 5 + extraColorsNeeded;
@@ -117,21 +117,18 @@ class KaleidoPop extends Game {
       return;
     }
 
-    // 1. Draw Side UI Panels first
     this.handleUI();
 
-    // 2. Calculate mouse angles for hover effects
     let mx = mouseX - width / 2;
     let my = mouseY - height / 2;
     let distFromCenter = dist(0, 0, mx, my);
     let mouseAngle = atan2(my, mx);
     mouseAngle -= this.currentRotation;
-    mouseAngle -= HALF_PI; 
+    mouseAngle -= HALF_PI;
     while (mouseAngle < 0) mouseAngle += TWO_PI;
     while (mouseAngle >= TWO_PI) mouseAngle -= TWO_PI;
     let angleThreshold = TWO_PI / this.petals.length / 2;
 
-    // 3. Draw Mandala
     push();
     translate(width / 2, height / 2);
 
@@ -146,34 +143,31 @@ class KaleidoPop extends Game {
       push();
       rotate(p.angle);
 
-      // Hover logic
       let isHovered = false;
       if (this.gameState === "INPUT" && distFromCenter > 25 && distFromCenter < p.radius) {
         let diff = abs(mouseAngle - p.angle);
-        if (diff > PI) diff = TWO_PI - diff; 
+        if (diff > PI) diff = TWO_PI - diff;
         if (diff < angleThreshold) isHovered = true;
       }
 
-      // Coloring logic
       if (this.gameState === "MEMORIZE") {
         fill(p.targetColor);
       } else if (this.gameState === "INPUT") {
-        fill(p.inputColor || (isHovered ? 230 : 255)); // Highlight on hover
+        fill(p.inputColor || (isHovered ? 230 : 255));
       } else if (this.gameState === "RESULT") {
         fill(p.inputColor || 255);
         if (p.inputColor === p.targetColor) stroke(PALETTE?.green || "#A0EACD");
         else stroke(PALETTE?.pink || "#F6C0D9");
       }
-      
-      strokeWeight(isHovered ? 5 : 3); // Thicken stroke on hover
+
+      strokeWeight(isHovered ? 5 : 3);
       if (this.gameState !== "RESULT") stroke(PALETTE?.blue || "#3E5296");
-      
-      if (isHovered) scale(1.05); // Pop out slightly
+
+      if (isHovered) scale(1.05);
       this.drawPetalShape(0, 0, p.radius, 90);
       pop();
     }
 
-    // Center Core
     drawingContext.shadowBlur = 15;
     drawingContext.shadowColor = "rgba(0,0,0,0.2)";
     fill(PALETTE?.blue || "#3E5296");
@@ -183,7 +177,6 @@ class KaleidoPop extends Game {
     drawingContext.shadowBlur = 0;
     pop();
 
-    // 4. Draw Overlays (Result/Game Over)
     if (this.gameState === "RESULT") {
       this.drawPopupCard("Level Complete!", "NEXT LEVEL >>");
     } else if (this.gameState === "GAMEOVER") {
@@ -192,15 +185,13 @@ class KaleidoPop extends Game {
   }
 
   handleUI() {
-    // --- TOP CENTER: Status & Timer ---
-    textAlign(CENTER, CENTER); 
+    textAlign(CENTER, CENTER);
     if (this.gameState === "MEMORIZE") {
       this.timer--;
       fill(80);
       textSize(28); textStyle(BOLD);
       text("Memorize the pattern!", width / 2, 60);
-      
-      // Visual Progress Bar for Timer
+
       let barW = 300;
       let fillW = map(this.timer, 0, this.timerMax, 0, barW);
       noStroke();
@@ -208,9 +199,9 @@ class KaleidoPop extends Game {
       rect(width/2 - barW/2, 90, barW, 10, 5);
       fill(PALETTE?.pink || "#F6C0D9");
       rect(width/2 - barW/2, 90, fillW, 10, 5);
-      
+
       if (this.timer <= 0) this.gameState = "INPUT";
-    } 
+    }
     else if (this.gameState === "INPUT") {
       fill(80);
       textSize(28); textStyle(BOLD);
@@ -219,20 +210,18 @@ class KaleidoPop extends Game {
       text("Press ENTER when finished", width / 2, 90);
     }
 
-    // --- LEFT PANEL: HUD ---
     push();
-    let hudX = max(40, width * 0.05); 
+    let hudX = max(40, width * 0.05);
     let hudY = height / 2 - 100;
-    
-    // Glassmorphism panel
+
     fill(255, 180); noStroke();
     rect(hudX, hudY, 160, 200, 20);
-    
+
     fill(80); textAlign(LEFT, TOP);
     textSize(14); textStyle(BOLD);
     text("LIVES", hudX + 20, hudY + 20);
     textSize(20);
-    text("❤️".repeat(this.lives), hudX + 20, hudY + 40);
+    text("Ã¢ÂÂ¤Ã¯Â¸Â".repeat(this.lives), hudX + 20, hudY + 40);
 
     textSize(14); textStyle(BOLD); fill(80);
     text("LEVEL", hudX + 20, hudY + 80);
@@ -245,28 +234,26 @@ class KaleidoPop extends Game {
     text(this.totalScore, hudX + 20, hudY + 160);
     pop();
 
-    // --- RIGHT PANEL: Palette ---
     if (this.gameState === "INPUT") {
       push();
       let spacing = 65;
       let rightX = width - 80;
       let startY = height / 2 - ((this.palette.length - 1) * spacing) / 2;
 
-      // Glassmorphism panel
       fill(255, 180); noStroke();
       rect(rightX - 35, startY - 40, 70, (this.palette.length * spacing) + 20, 35);
 
       for (let i = 0; i < this.palette.length; i++) {
         let py = startY + i * spacing;
         let isSelected = (this.selectedBrushColor === this.palette[i]);
-        
+
         drawingContext.shadowBlur = isSelected ? 15 : 5;
         drawingContext.shadowColor = isSelected ? this.palette[i] : "rgba(0,0,0,0.2)";
-        
+
         fill(this.palette[i]);
         if (isSelected) {
-          stroke(255); strokeWeight(4); 
-          circle(rightX, py, 45); // Larger when selected
+          stroke(255); strokeWeight(4);
+          circle(rightX, py, 45);
         } else {
           stroke(200); strokeWeight(2);
           circle(rightX, py, 35);
@@ -293,7 +280,6 @@ class KaleidoPop extends Game {
 
     if (this.gameState !== "INPUT") return;
 
-    // --- Check Right Panel Palette Clicks ---
     let spacing = 65;
     let rightX = width - 80;
     let startY = height / 2 - ((this.palette.length - 1) * spacing) / 2;
@@ -302,18 +288,17 @@ class KaleidoPop extends Game {
       let py = startY + i * spacing;
       if (dist(mouseX, mouseY, rightX, py) < 25) {
         this.selectedBrushColor = this.palette[i];
-        if (typeof audioManager !== "undefined") audioManager.playSound("petal"); // Optional click sound
-        return; 
+        if (typeof audioManager !== "undefined") audioManager.playSound("petal");
+        return;
       }
     }
 
-    // --- Check Petal Clicks ---
     let mx = mouseX - width / 2;
     let my = mouseY - height / 2;
     let distFromCenter = dist(0, 0, mx, my);
     let mouseAngle = atan2(my, mx);
     mouseAngle -= this.currentRotation;
-    mouseAngle -= HALF_PI; 
+    mouseAngle -= HALF_PI;
 
     while (mouseAngle < 0) mouseAngle += TWO_PI;
     while (mouseAngle >= TWO_PI) mouseAngle -= TWO_PI;
@@ -323,18 +308,17 @@ class KaleidoPop extends Game {
     for (let p of this.petals) {
       if (distFromCenter > 25 && distFromCenter < p.radius) {
         let diff = abs(mouseAngle - p.angle);
-        if (diff > PI) diff = TWO_PI - diff; 
+        if (diff > PI) diff = TWO_PI - diff;
 
         if (diff < angleThreshold) {
           p.inputColor = this.selectedBrushColor;
           if (typeof audioManager !== "undefined") audioManager.playSound("petal");
-          break; 
+          break;
         }
       }
     }
   }
 
-  // Draw Petal Shape, Milestone, and Popup Card remain largely the same, just ensured clean UI
   drawPetalShape(x, y, len, wid) {
     beginShape();
     vertex(x, y);
@@ -344,22 +328,22 @@ class KaleidoPop extends Game {
   }
 
   drawPopupCard(title, btnLabel) {
-      fill(0, 100); noStroke(); rect(0, 0, width, height); 
+      fill(0, 100); noStroke(); rect(0, 0, width, height);
       let cardW = 400, cardH = 300, cardX = width / 2, cardY = height / 2;
-      
+
       drawingContext.shadowBlur = 30;
       drawingContext.shadowColor = 'rgba(0,0,0,0.2)';
       fill(255); rectMode(CENTER); rect(cardX, cardY, cardW, cardH, 20);
-      rectMode(CORNER); drawingContext.shadowBlur = 0; 
+      rectMode(CORNER); drawingContext.shadowBlur = 0;
 
       fill(50); textSize(32); textStyle(BOLD); textAlign(CENTER, CENTER);
       text(title, cardX, cardY - 80);
-      
+
       textSize(20); textStyle(NORMAL);
       if (this.gameState === "RESULT") {
           let correctCount = 0;
           for (let p of this.petals) if (p.inputColor === p.targetColor) correctCount++;
-          if (correctCount === this.petals.length) fill("#2E7D32"); else fill("#D32F2F"); 
+          if (correctCount === this.petals.length) fill("#2E7D32"); else fill("#D32F2F");
           text(`${correctCount}/${this.petals.length} Correct`, cardX, cardY - 30);
           fill(50); text(`+${correctCount * 10} Points`, cardX, cardY + 10);
       } else {
@@ -369,10 +353,10 @@ class KaleidoPop extends Game {
 
       let btnW = 220, btnH = 50, btnY = cardY + 80;
       let isHovered = mouseX > cardX - btnW/2 && mouseX < cardX + btnW/2 && mouseY > btnY - btnH/2 && mouseY < btnY + btnH/2;
-      
+
       fill(isHovered ? (PALETTE?.purple || "#9B5DE5") : (PALETTE?.blue || "#5BACE0"));
       if (isHovered) cursor(HAND);
-      
+
       rectMode(CENTER); rect(cardX, btnY, btnW, btnH, 25); rectMode(CORNER);
       fill(255); textSize(18); textStyle(BOLD);
       text(btnLabel, cardX, btnY);
@@ -403,10 +387,10 @@ class KaleidoPop extends Game {
 
       let btnW = 200, btnH = 50, btnY = height / 2 + 100;
       let isHovered = mouseX > width/2 - btnW/2 && mouseX < width/2 + btnW/2 && mouseY > btnY - btnH/2 && mouseY < btnY + btnH/2;
-      
+
       fill(isHovered ? PALETTE?.green : PALETTE?.blue);
       if (isHovered) cursor(HAND);
-      
+
       rectMode(CENTER); rect(width / 2, btnY, btnW, btnH, 10); rectMode(CORNER);
       fill(255); textSize(18); textStyle(BOLD);
       text("CONTINUE", width / 2, btnY);

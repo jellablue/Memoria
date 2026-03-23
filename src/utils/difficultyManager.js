@@ -1,6 +1,3 @@
-// ============================================
-// DIFFICULTY MANAGER
-// ============================================
 
 class DifficultyManager {
   static getConfigByAge(age) {
@@ -20,20 +17,16 @@ class DifficultyManager {
       ...difficultyParams,
     };
 
-    // Game-specific scaling
     if (gameType === "GAME_A") {
-      // Kaleido-Pop: rotation speed increases with level
       difficulty.petalSpeed =
         (difficultyParams.petalSpeed || 0.002) +
         (level - 1) * 0.0005;
     } else if (gameType === "GAME_B") {
-      // Jelly Jams: sequence gets longer and faster
       difficulty.playbackSpeed = max(
         20,
         (difficultyParams.jellySpeed || 60) - level * 2
       );
     } else if (gameType === "GAME_C") {
-      // Tiptoe Trails: grid grows and speed increases
       difficulty.gridSize = min(
         (difficultyParams.tiptoeGrid || 4) + floor((level - 1) / 3),
         8

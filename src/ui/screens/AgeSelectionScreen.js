@@ -1,16 +1,12 @@
-// ============================================
-// AGE SELECTION SCREEN
-// ============================================
 
 class AgeSelectionScreen {
   constructor() {
     this.ageCards = [];
     this._lastW = -1;
     this._lastH = -1;
-    
-    // Smooth animation state for the back button
-    this.backBtnScale = 1.0; 
-    
+
+    this.backBtnScale = 1.0;
+
     this.initCards();
   }
 
@@ -21,7 +17,7 @@ class AgeSelectionScreen {
 
     if (isNarrow) {
       const centerX = width / 2;
-      const startY = height * 0.40; // Pushed down slightly to give title room
+      const startY = height * 0.40;
       const gapY = cardH + constrain(height * 0.025, 14, 24);
 
       this.ageCards = [
@@ -55,7 +51,6 @@ class AgeSelectionScreen {
   draw() {
     this._syncLayout();
 
-    // 1. Heading Typography
     drawingContext.shadowBlur = 15;
     drawingContext.shadowColor = "rgba(255, 255, 255, 0.8)";
     fill(PALETTE?.text || 60);
@@ -63,9 +58,8 @@ class AgeSelectionScreen {
     textStyle(BOLD);
     textAlign(CENTER, CENTER);
     text("Who is playing today?", width / 2, height * 0.18);
-    drawingContext.shadowBlur = 0; // Reset shadow
+    drawingContext.shadowBlur = 0;
 
-    // 2. Subtitle Typography
     textSize(constrain(min(width, height) * 0.03, 16, 22));
     fill(120);
     textStyle(NORMAL);
@@ -75,48 +69,43 @@ class AgeSelectionScreen {
       height * 0.25
     );
 
-    // 3. Draw Age Cards
     rectMode(CENTER);
     for (let card of this.ageCards) {
       card.display();
     }
     rectMode(CORNER);
 
-    // 4. Back Button
     this.drawBackButton();
   }
 
   drawBackButton() {
-    let cx = max(40, width * 0.05); // Responsive positioning
+    let cx = max(40, width * 0.05);
     let cy = max(40, height * 0.06);
-    let r = 24; // Slightly larger for better clickability
+    let r = 24;
 
     let hover = dist(mouseX, mouseY, cx, cy) < r;
-    
-    // Smooth scaling math for the bounce effect
+
     this.backBtnScale = lerp(this.backBtnScale, hover ? 1.15 : 1.0, 0.2);
 
     push();
     translate(cx, cy);
-    scale(this.backBtnScale); // Apply the smooth scale
+    scale(this.backBtnScale);
 
-    // Soft 3D shadow
     drawingContext.shadowBlur = hover ? 15 : 5;
     drawingContext.shadowColor = 'rgba(0,0,0,0.15)';
-    
-    noStroke();
-    fill(255); // Keep it clean white
-    circle(0, 0, r * 2);
-    
-    drawingContext.shadowBlur = 0; // Reset shadow for the arrow
 
-    // Draw the cute rounded arrow
-    stroke(hover ? (PALETTE?.pink || '#FFB7B2') : 100); // Color shift on hover
+    noStroke();
+    fill(255);
+    circle(0, 0, r * 2);
+
+    drawingContext.shadowBlur = 0;
+
+    stroke(hover ? (PALETTE?.pink || '#FFB7B2') : 100);
     strokeWeight(4);
     strokeCap(ROUND);
     strokeJoin(ROUND);
     noFill();
-    
+
     beginShape();
     vertex(4, -8);
     vertex(-4, 0);
@@ -125,7 +114,6 @@ class AgeSelectionScreen {
 
     pop();
 
-    // Handle Cursor (Only set to ARROW if we aren't hovering over a card either)
     if (hover) {
       cursor(HAND);
     }
@@ -134,24 +122,21 @@ class AgeSelectionScreen {
   handleClick() {
     let cx = max(40, width * 0.05);
     let cy = max(40, height * 0.06);
-    
-    // Check back button
+
     if (dist(mouseX, mouseY, cx, cy) < 24) {
       gameState.setScreen(GAME_STATES.WELCOME);
-      if (typeof audioManager !== 'undefined') audioManager.playSound("petal"); // Optional UI sound
+      if (typeof audioManager !== 'undefined') audioManager.playSound("petal");
       return true;
     }
 
-    // Check age cards
     for (let i = 0; i < this.ageCards.length; i++) {
       if (this.ageCards[i].isClicked()) {
         const categories = ["JUNIOR", "ADULT", "SENIOR"];
         gameState.setAgeGroup(categories[i]);
         gameState.initializeGames();
-        
+
         if (typeof audioManager !== 'undefined') audioManager.playSound("petal");
-        
-        // Use your UI Manager transition!
+
         uiManager.requestTransition(GAME_STATES.MENU);
         return true;
       }

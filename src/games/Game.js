@@ -1,6 +1,3 @@
-// ============================================
-// BASE GAME CLASS (Shared Logic)
-// ============================================
 
 class Game {
   constructor(difficultyParams = {}) {
@@ -11,14 +8,11 @@ class Game {
     this.difficultyParams = difficultyParams;
   }
 
-  // Shared UI drawing for popup cards
   drawPopupCard(title, btnLabel, scoreInfo = {}) {
-    // Blur Background
     fill(0, 100);
     noStroke();
     rect(0, 0, width, height);
 
-    // Card Body
     let cardW = 400;
     let cardH = 300;
     let cardX = width / 2;
@@ -32,7 +26,6 @@ class Game {
     rectMode(CORNER);
     drawingContext.shadowBlur = 0;
 
-    // Text Content
     fill(50);
     textSize(32);
     textStyle(BOLD);
@@ -51,7 +44,6 @@ class Game {
       text(`Level Reached: ${this.level}`, cardX, cardY + 10);
     }
 
-    // Button
     let btnW = 220;
     let btnH = 50;
     let btnY = cardY + 80;
@@ -75,17 +67,15 @@ class Game {
     textStyle(NORMAL);
   }
 
-  // Shared HUD drawing
   drawHUD() {
     noStroke();
     textSize(24);
 
-    // Lower Left HUD
     textAlign(LEFT, BOTTOM);
     fill(PALETTE.text || 50);
     let hudX = 30;
     let hudY = height - 30;
-    text("Lives: " + "❤️".repeat(this.lives), hudX, hudY - 70);
+    text("Lives: " + "Ã¢ÂÂ¤Ã¯Â¸Â".repeat(this.lives), hudX, hudY - 70);
     text("Level: " + this.level, hudX, hudY - 40);
     text("Score: " + this.score, hudX, hudY - 10);
   }

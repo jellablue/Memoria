@@ -1,7 +1,7 @@
 class TiptoeTrails extends Game {
   constructor(difficultyParams = {}) {
     super(difficultyParams);
-    this.gameState = "PREVIEW"; // PREVIEW, INPUT, RESULT, GAMEOVER
+    this.gameState = "PREVIEW";
     this.level = 1;
     this.score = 0;
     this.lives = 3;
@@ -13,19 +13,17 @@ class TiptoeTrails extends Game {
     this.stepInterval = 40;
 
     this.tileSize = 60;
-    this.gap = 10; 
+    this.gap = 10;
     this.offsetX = 0;
     this.offsetY = 0;
 
     this.path = [];
     this.playerPath = [];
-    this.tiles = []; 
+    this.tiles = [];
 
-    // Layout tracking
     this._lastW = -1;
     this._lastH = -1;
 
-    // Visual feedback
     this.flashTimer = 0;
 
     this.setupLevel();
@@ -45,23 +43,22 @@ class TiptoeTrails extends Game {
     this.gameState = "PREVIEW";
     this.previewTimer = 0;
     this.playerPath = [];
-    
-    // Force layout recalculation to rebuild the visual tiles
-    this._lastW = -1; 
+
+    this._lastW = -1;
   }
 
   generatePath() {
     this.path = [];
     let currentX = floor(random(this.gridCols));
-    let currentY = this.gridRows - 1; 
+    let currentY = this.gridRows - 1;
 
     this.path.push({ x: currentX, y: currentY });
 
     while (currentY > 0) {
       let moves = [];
-      moves.push({ x: 0, y: -1 }); 
-      if (currentX > 0) moves.push({ x: -1, y: 0 }); 
-      if (currentX < this.gridCols - 1) moves.push({ x: 1, y: 0 }); 
+      moves.push({ x: 0, y: -1 });
+      if (currentX > 0) moves.push({ x: -1, y: 0 });
+      if (currentX < this.gridCols - 1) moves.push({ x: 1, y: 0 });
 
       let move = random(moves);
       currentX += move.x;
@@ -74,15 +71,13 @@ class TiptoeTrails extends Game {
     }
   }
 
-  // FIXED: Centers the grid perfectly in the middle of the screen
   _syncLayout() {
     if (this._lastW !== width || this._lastH !== height) {
       let playCenterX = width / 2;
-      let playCenterY = height * 0.52; // Matches JellyJams vertical offset
+      let playCenterY = height * 0.52;
 
       let maxGridDim = max(this.gridCols, this.gridRows);
-      
-      // Calculate responsive tile size based on available space
+
       let availableSpace = min(width * 0.5, height * 0.6);
       this.tileSize = constrain(availableSpace / maxGridDim, 40, 85);
 
@@ -92,7 +87,6 @@ class TiptoeTrails extends Game {
       this.offsetX = playCenterX - totalW / 2 + this.tileSize / 2;
       this.offsetY = playCenterY - totalH / 2 + this.tileSize / 2;
 
-      // Rebuild visual tiles array
       this.tiles = [];
       for (let r = 0; r < this.gridRows; r++) {
         for (let c = 0; c < this.gridCols; c++) {
@@ -114,10 +108,9 @@ class TiptoeTrails extends Game {
     this._syncLayout();
     this.handleLogic();
 
-    // 1. Draw Grid Visuals
     rectMode(CENTER);
     let visibleSteps = floor(this.previewTimer / this.stepInterval);
-    if (this.gameState === "INPUT") visibleSteps = 0; 
+    if (this.gameState === "INPUT") visibleSteps = 0;
 
     for (let t of this.tiles) {
       let pathIndex = this.path.findIndex((p) => p.x === t.c && p.y === t.r);
@@ -125,16 +118,15 @@ class TiptoeTrails extends Game {
       let isPlayerClicked = this.playerPath.some((p) => p.x === t.c && p.y === t.r);
       let hover = this.isHovering(t) && this.gameState === "INPUT";
 
-      let tileColor = color(255); 
+      let tileColor = color(255);
       let targetScale = 1.0;
 
-      // Logic to determine Tile Color & Target Scale
       if (this.gameState === "PREVIEW") {
         if (isPath && pathIndex <= visibleSteps) {
           tileColor = color(PALETTE?.blue || "#B5CDF5");
-          if (pathIndex === visibleSteps) targetScale = 1.15; // Pop the current preview step
+          if (pathIndex === visibleSteps) targetScale = 1.15;
         }
-      } 
+      }
       else if (this.gameState === "INPUT") {
         if (isPlayerClicked) {
            tileColor = color(PALETTE?.green || "#A0EACD");
@@ -143,27 +135,25 @@ class TiptoeTrails extends Game {
            targetScale = 1.08;
            cursor(HAND);
         }
-      } 
+      }
       else if (this.gameState === "RESULT") {
         if (isPath) tileColor = color(PALETTE?.green || "#A0EACD");
-      } 
+      }
       else if (this.gameState === "GAMEOVER") {
         if (isPath) tileColor = color(PALETTE?.green || "#A0EACD");
         let lastStep = this.playerPath[this.playerPath.length - 1];
         if (lastStep && lastStep.x === t.c && lastStep.y === t.r && !isPath) {
-           tileColor = color("#D32F2F"); // Red mistake
+           tileColor = color("#D32F2F");
            targetScale = 1.1;
         }
       }
 
-      // Smooth Scale Interpolation
       t.scale = lerp(t.scale, targetScale, 0.2);
 
       push();
       translate(t.x, t.y);
       scale(t.scale);
 
-      // Dynamic Shadows
       if (isPlayerClicked || (isPath && this.gameState !== "INPUT" && pathIndex <= visibleSteps)) {
         drawingContext.shadowBlur = 20;
         drawingContext.shadowColor = tileColor;
@@ -176,9 +166,8 @@ class TiptoeTrails extends Game {
       }
 
       fill(tileColor);
-      rect(0, 0, this.tileSize, this.tileSize, 15); // Rounded tiles
+      rect(0, 0, this.tileSize, this.tileSize, 15);
 
-      // Start Marker (Pulsing dot on the first tile)
       if (isPath && pathIndex === 0 && this.gameState === "PREVIEW") {
          let pulse = sin(frameCount * 0.1) * 3;
          fill(255); noStroke();
@@ -188,28 +177,25 @@ class TiptoeTrails extends Game {
     }
     rectMode(CORNER);
 
-    // 2. Draw Error Flash Overlay
     if (this.flashTimer > 0) {
-      fill(211, 47, 47, this.flashTimer * 10); // Fade out red
+      fill(211, 47, 47, this.flashTimer * 10);
       noStroke();
       rect(0, 0, width, height);
       this.flashTimer--;
     }
 
-    // 3. UI
     this.handleUI();
   }
 
   handleLogic() {
     if (this.gameState === "PREVIEW") {
       this.previewTimer++;
-      
+
       let totalTime = (this.path.length * this.stepInterval) + 40;
 
-      // Draw Progress Bar anchored to the exact center
       let barMaxW = 400;
       let barW = map(this.previewTimer, 0, totalTime, 0, barMaxW);
-      
+
       noStroke(); fill(220);
       rect(width / 2 - barMaxW/2, height - 30, barMaxW, 8, 4);
       fill(PALETTE?.blue || "#B5CDF5");
@@ -222,7 +208,6 @@ class TiptoeTrails extends Game {
   }
 
   isHovering(t) {
-    // CENTER-based hitbox detection
     return mouseX > t.x - this.tileSize/2 && mouseX < t.x + this.tileSize/2 &&
            mouseY > t.y - this.tileSize/2 && mouseY < t.y + this.tileSize/2;
   }
@@ -259,10 +244,10 @@ class TiptoeTrails extends Game {
       }
     } else {
       this.lives--;
-      this.flashTimer = 15; // Trigger red flash
-      
+      this.flashTimer = 15;
+
       if (this.lives <= 0) {
-          this.playerPath.push({ x: col, y: row }); 
+          this.playerPath.push({ x: col, y: row });
           this.gameState = 'GAMEOVER';
       }
     }
@@ -270,9 +255,8 @@ class TiptoeTrails extends Game {
 
   handleUI() {
     noStroke();
-    let topY = height * 0.1; // Matched with JellyJams
-    
-    // --- TOP CENTER: Status Instructions ---
+    let topY = height * 0.1;
+
     push();
     textAlign(CENTER, CENTER);
     if (this.gameState === "PREVIEW") {
@@ -282,7 +266,7 @@ class TiptoeTrails extends Game {
        fill(PALETTE?.blue || 80);
        textSize(22); textStyle(BOLD);
        text("Memorize the path...", width / 2, topY);
-    } 
+    }
     else if (this.gameState === "INPUT") {
        fill(255, 220);
        rectMode(CENTER);
@@ -293,19 +277,18 @@ class TiptoeTrails extends Game {
     }
     pop();
 
-    // --- LEFT PANEL: HUD ---
     push();
-    let hudX = max(40, width * 0.05); // Standardized margin
+    let hudX = max(40, width * 0.05);
     let hudY = height / 2 - 100;
-    
+
     fill(255, 180); noStroke();
-    rect(hudX, hudY, 160, 200, 20); 
-    
+    rect(hudX, hudY, 160, 200, 20);
+
     fill(80); textAlign(LEFT, TOP);
     textSize(14); textStyle(BOLD);
     text("LIVES", hudX + 20, hudY + 20);
     textSize(20);
-    text("❤️".repeat(this.lives), hudX + 20, hudY + 40);
+    text("Ã¢ÂÂ¤Ã¯Â¸Â".repeat(this.lives), hudX + 20, hudY + 40);
 
     textSize(14); textStyle(BOLD); fill(80);
     text("LEVEL", hudX + 20, hudY + 80);
@@ -318,18 +301,17 @@ class TiptoeTrails extends Game {
     text(this.score, hudX + 20, hudY + 160);
     pop();
 
-    // --- POPUPS ---
     if (this.gameState === "RESULT") this.drawPopupCard("Level Complete!", "NEXT LEVEL >>");
     else if (this.gameState === "GAMEOVER") this.drawPopupCard("Game Over", "TRY AGAIN");
   }
 
   drawPopupCard(title, btnLabel) {
       fill(0, 100); noStroke();
-      rect(0, 0, width, height); 
-      
+      rect(0, 0, width, height);
+
       let cardW = 400, cardH = 300;
-      let cardX = width / 2, cardY = height / 2; // FIXED: Centered
-      
+      let cardX = width / 2, cardY = height / 2;
+
       drawingContext.shadowBlur = 30;
       drawingContext.shadowColor = 'rgba(0,0,0,0.2)';
       fill(255); rectMode(CENTER);
@@ -338,7 +320,7 @@ class TiptoeTrails extends Game {
 
       fill(50); textSize(32); textStyle(BOLD); textAlign(CENTER, CENTER);
       text(title, cardX, cardY - 80);
-      
+
       textSize(20); textStyle(NORMAL);
       if (this.gameState === "RESULT") {
           fill("#2E7D32"); text("Path Completed!", cardX, cardY - 30);
@@ -350,10 +332,10 @@ class TiptoeTrails extends Game {
 
       let btnW = 220, btnH = 50, btnY = cardY + 80;
       let isHovered = mouseX > cardX - btnW/2 && mouseX < cardX + btnW/2 && mouseY > btnY - btnH/2 && mouseY < btnY + btnH/2;
-      
+
       fill(isHovered ? (PALETTE?.purple || "#9B5DE5") : (PALETTE?.blue || "#5BACE0"));
       if (isHovered) cursor(HAND);
-      
+
       rectMode(CENTER); rect(cardX, btnY, btnW, btnH, 25); rectMode(CORNER);
       fill(255); textSize(18); textStyle(BOLD);
       text(btnLabel, cardX, btnY);
@@ -362,7 +344,7 @@ class TiptoeTrails extends Game {
 
   checkPopupClick() {
       let cardX = width / 2, btnY = height / 2 + 80, btnW = 220, btnH = 50;
-      
+
       if (mouseX > cardX - btnW/2 && mouseX < cardX + btnW/2 && mouseY > btnY - btnH/2 && mouseY < btnY + btnH/2) {
           if (this.gameState === "RESULT") {
               this.level++;

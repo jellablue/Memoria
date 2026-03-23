@@ -1,34 +1,24 @@
-// ============================================
-// SUMMARY CARD — End-of-game sliding panel
-// ============================================
-//
-// Uses p5.js translate() to animate the card sliding up from below the
-// screen into center view when a game session ends.
 
 class SummaryCard {
   constructor(gameKey, sessionScore) {
-    this.gameKey      = gameKey;      // "kaleido" | "jelly" | "tiptoe"
+    this.gameKey      = gameKey;
     this.sessionScore = sessionScore;
 
-    // Slide animation state (fixed-duration easing).
     this.animProgress = 0;
     this.animFrames   = 24;
     this.startOffsetY = max(height * 0.9, 520);
     this.animComplete = false;
 
-    // Card dimensions
     this.CARD_W = 500;
     this.CARD_H = 450;
     this._lastMetrics = null;
 
-    // Map game keys to display names
     this._NAMES = {
       kaleido: "Kaleido-Pop",
       jelly:   "Jelly Jams",
       tiptoe:  "Tiptoe Trails",
     };
 
-    // Avoid flooding the console with identical per-frame errors.
     this._loggedErrors = new Set();
   }
 
@@ -111,9 +101,6 @@ class SummaryCard {
     };
   }
 
-  // ------------------------------------------
-  // Update the slide animation each frame
-  // ------------------------------------------
   update() {
     this.animProgress = min(1, this.animProgress + 1 / this.animFrames);
     if (this.animProgress >= 1) {
@@ -121,20 +108,15 @@ class SummaryCard {
     }
   }
 
-  // ------------------------------------------
-  // Draw the full summary card
-  // ------------------------------------------
   draw() {
     this.update();
 
-    // Guard against transform/blend-state leakage from active game draw calls.
     push();
     try {
       resetMatrix();
       blendMode(BLEND);
       rectMode(CORNER);
 
-      // Dim background
       fill(0, 165);
       noStroke();
       rect(0, 0, width, height);
@@ -145,7 +127,6 @@ class SummaryCard {
       this._lastMetrics = metrics;
       const offsetY = this._getOffsetY();
 
-      // --- Apply slide transform ---
       push();
       try {
         translate(cx, cy + offsetY);
@@ -238,7 +219,7 @@ class SummaryCard {
         this._logError("draw card content", err);
         this._drawFallbackCard(cx, cy);
       } finally {
-        pop(); // end translate
+        pop();
       }
 
       try {
@@ -253,9 +234,6 @@ class SummaryCard {
     }
   }
 
-  // ------------------------------------------
-  // Click detection (compensates for translate)
-  // ------------------------------------------
   isPlayAgainClicked() {
     const m = this._lastMetrics || this._getMetrics();
     const btnY = height / 2 + m.btnY + this._getOffsetY();
@@ -270,9 +248,6 @@ class SummaryCard {
     return this._hitTest(btn2X, btnY, m.btnW, m.btnH);
   }
 
-  // ------------------------------------------
-  // Helpers
-  // ------------------------------------------
   _statRow(cx, y, label, value, valueColor, metrics) {
     noStroke();
     fill(100);
@@ -288,7 +263,6 @@ class SummaryCard {
     text(value, cx + metrics.statsRightX, y);
   }
 
-  // Hover check accounts for the live animated offset
   _isHover(localBtnX, localBtnY, w, h, offsetY) {
     const screenX = width / 2 + localBtnX;
     const screenY = height / 2 + localBtnY + offsetY;
@@ -298,7 +272,6 @@ class SummaryCard {
     );
   }
 
-  // Hit-test uses actual screen coords (already shifted)
   _hitTest(btnX, screenY, w, h) {
     return (
       mouseX > btnX - w / 2 && mouseX < btnX + w / 2 &&
@@ -306,4 +279,3 @@ class SummaryCard {
     );
   }
 }
-

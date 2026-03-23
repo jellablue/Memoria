@@ -1,6 +1,3 @@
-// ============================================
-// AUDIO MANAGER
-// ============================================
 
 class AudioManager {
   constructor() {
@@ -39,7 +36,6 @@ class AudioManager {
       case "petal":
         if (this.petalSound) this.petalSound.play();
         break;
-      // Add more sounds as needed
     }
   }
 
@@ -53,5 +49,4 @@ class AudioManager {
   }
 }
 
-// Global instance
 let audioManager = new AudioManager();

@@ -86,4 +86,4 @@ const GAME_STATES = {
   RESULTS: "RESULTS",
 };
 
-const IDLE_TIME_LIMIT = 300000; // 30 seconds
+const IDLE_TIME_LIMIT = 300000;

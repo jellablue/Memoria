@@ -1,13 +1,10 @@
-// ============================================
-// CENTRALIZED GAME STATE MANAGER
-// ============================================
 
 class GameState {
   constructor() {
     this.currentScreen = GAME_STATES.WELCOME;
     this.userAge = 8;
     this.difficultyParams = {};
-    
+
     this.cognitiveProfile = {
       visualScore: 0,
       auditoryScore: 0,
@@ -27,7 +24,6 @@ class GameState {
     this.isIdle = false;
   }
 
-  // Set age group and difficulty
   setAgeGroup(ageCategory) {
     const config = DIFFICULTY_CONFIG[ageCategory];
     this.userAge = config.age;
@@ -35,7 +31,6 @@ class GameState {
     return this.difficultyParams;
   }
 
-  // Navigation
   setScreen(screenName) {
     this.currentScreen = screenName;
   }
@@ -44,7 +39,6 @@ class GameState {
     return this.currentScreen;
   }
 
-  // Instruction overlay
   showGameInstructions(gameKey) {
     this.showInstructions = true;
     this.currentInstructionKey = gameKey;
@@ -54,7 +48,6 @@ class GameState {
     this.showInstructions = false;
   }
 
-  // Idle detection
   recordActivity() {
     this.lastActivityTime = millis();
     this.isIdle = false;
@@ -66,7 +59,6 @@ class GameState {
     }
   }
 
-  // Cognitive profile updates
   updateCognitiveScore(gameType, score) {
     if (gameType === "GAME_A") this.cognitiveProfile.visualScore += score;
     if (gameType === "GAME_B") this.cognitiveProfile.auditoryScore += score;
@@ -74,7 +66,6 @@ class GameState {
     this.cognitiveProfile.gamesPlayed++;
   }
 
-  // Game instances
   setGameInstance(gameType, gameInstance) {
     if (gameType === "GAME_A") this.games.kaleido = gameInstance;
     if (gameType === "GAME_B") this.games.jelly = gameInstance;
@@ -88,7 +79,6 @@ class GameState {
     return null;
   }
 
-  // Reset all games
   initializeGames() {
     this.games.kaleido = new KaleidoPop(this.difficultyParams);
     this.games.jelly = new JellyJams(this.difficultyParams);
@@ -102,5 +92,4 @@ class GameState {
   }
 }
 
-// Global instance
 let gameState = new GameState();

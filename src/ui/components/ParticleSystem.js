@@ -1,6 +1,3 @@
-// ============================================
-// PARTICLE SYSTEM (Lanterns & Sparkles)
-// ============================================
 
 class HangingLantern {
   constructor(x, len) {
@@ -67,7 +64,6 @@ class ParticleSystem {
     this.colorTop = color("#E0B0FF");
     this.colorBottom = color("#F0FFF0");
 
-    // Initialize particles
     for (let i = 0; i < 10; i++) {
       this.lanterns.push(new HangingLantern(random(width), random(50, 150)));
     }
@@ -83,11 +79,9 @@ class ParticleSystem {
   }
 
   draw() {
-    // Background image
     if (typeof bgImage !== 'undefined' && bgImage) {
       image(bgImage, 0, 0, width, height);
     } else {
-      // Fallback gradient
       noFill();
       for (let y = 0; y < height; y++) {
         let inter = map(y, 0, height, 0, 1);
@@ -97,12 +91,9 @@ class ParticleSystem {
       }
     }
 
-    // Draw particles
     for (let l of this.lanterns) l.draw();
     for (let s of this.sparkles) s.draw();
 
-    // Foreground flora
-    //this.drawForegroundFlora();
   }
 
   drawForegroundFlora() {
@@ -138,7 +129,6 @@ class Particle {
     noStroke();
     fill(red(this.col), green(this.col), blue(this.col), this.alpha);
     ellipse(this.x, this.y, this.size);
-   // rect(this.x, this.y, this.size, this.size, 1);
   }
 
   isDead() {
