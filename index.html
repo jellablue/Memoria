@@ -1,0 +1,58 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Memoria: Blu's Wonderland</title>
+    <style>
+      body {
+        padding: 0;
+        margin: 0;
+        overflow: hidden;
+      }
+    </style>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.9.0/p5.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.9.0/addons/p5.sound.min.js"></script>
+
+    <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;600;700&display=swap" rel="stylesheet">
+  </head>
+
+  <body>
+    <!-- ========== CONFIGURATION & STATE ========== -->
+    <script src="src/constants.js"></script>
+    <script src="src/gameState.js"></script>
+    <script src="src/starBank.js"></script>
+
+    <!-- ========== UTILITIES ========== -->
+    <script src="src/utils/audioManager.js"></script>
+    <script src="src/utils/difficultyManager.js"></script>
+
+    <!-- ========== GAME BASE CLASS & IMPLEMENTATIONS ========== -->
+    <script src="src/games/Game.js"></script>
+    <script src="src/KaleidoPop.js"></script>
+    <script src="src/JellyJams.js"></script>
+    <script src="src/TiptoeTrails.js"></script>
+
+    <!-- ========== UI COMPONENTS ========== -->
+    <script src="src/ui/components/ParticleSystem.js"></script>
+    <script src="src/ui/components/MenuButton.js"></script>
+    <script src="src/ui/components/AgeCard.js"></script>
+    <script src="src/ui/components/InstructionOverlay.js"></script>
+    <script src="src/ui/components/SummaryCard.js"></script>
+    <script src="src/ui/components/CloudTransition.js"></script>
+
+    <!-- ========== UI SCREENS ========== -->
+    <script src="src/ui/screens/WelcomeScreen.js"></script>
+    <script src="src/ui/screens/AgeSelectionScreen.js"></script>
+    <script src="src/ui/screens/MenuScreen.js"></script>
+    <script src="src/ui/screens/GameScreen.js"></script>
+    <script src="src/ui/screens/ProfileScreen.js"></script>
+
+    <!-- ========== UI MANAGER ========== -->
+    <script src="src/ui/UIManager.js"></script>
+
+    <!-- ========== MAIN SKETCH ========== -->
+    <script src="sketch.js"></script>
+  </body>
+</html>
