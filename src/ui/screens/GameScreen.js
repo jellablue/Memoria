@@ -4,18 +4,52 @@ class GameScreen {
     this.game = gameState.getGameInstance(gameType);
     this.instructionOverlay = null;
 
-    // SummaryCard state
     this.summaryCard    = null;
     this._scoreReported = false;
+    
+    this.backBtnScale = 1.0; // Added for bouncy animation
 
     if (gameState.showInstructions) {
-      this.instructionOverlay = new InstructionOverlay(
-        gameState.currentInstructionKey
-      );
+      this.instructionOverlay = new InstructionOverlay(gameState.currentInstructionKey);
     }
   }
 
-  // Map GAME_X enum → starBank key
+  // [ _createGameInstance, _resetGameInstance, prepareForEntry, _getGameKey, _getSessionScore, _checkAndCreateSummaryCard, _restartGame remain exactly the same ]
+  
+  _createGameInstance() {
+    let newGame = null;
+    if (this.gameType === "GAME_A") newGame = new KaleidoPop(gameState.difficultyParams);
+    else if (this.gameType === "GAME_B") newGame = new JellyJams(gameState.difficultyParams);
+    else if (this.gameType === "GAME_C") newGame = new TiptoeTrails(gameState.difficultyParams);
+
+    if (newGame) {
+      gameState.setGameInstance(this.gameType, newGame);
+      this.game = newGame;
+    }
+  }
+
+  _resetGameInstance() {
+    if (!this.game) this._createGameInstance();
+    if (!this.game) return;
+
+    if (this.gameType === "GAME_A" && this.game.restartGame) this.game.restartGame();
+    else if (this.gameType === "GAME_B" && this.game.startGame) this.game.startGame();
+    else if (this.gameType === "GAME_C" && this.game.restartGame) this.game.restartGame();
+  }
+
+  prepareForEntry() {
+    this.game = gameState.getGameInstance(this.gameType);
+    this._resetGameInstance();
+    this.summaryCard = null;
+    this._scoreReported = false;
+
+    if (gameState.showInstructions) {
+      this.instructionOverlay = new InstructionOverlay(gameState.currentInstructionKey);
+    } else {
+      this.instructionOverlay = null;
+    }
+  }
+
   _getGameKey() {
     if (this.gameType === "GAME_A") return "kaleido";
     if (this.gameType === "GAME_B") return "jelly";
@@ -23,202 +57,151 @@ class GameScreen {
     return "unknown";
   }
 
-  // KaleidoPop uses `totalScore`; Jelly + Tiptoe use `score`
   _getSessionScore() {
     if (!this.game) return 0;
-    return (this.game.totalScore !== undefined)
-      ? this.game.totalScore
-      : (this.game.score || 0);
+    return (this.game.totalScore !== undefined) ? this.game.totalScore : (this.game.score || 0);
   }
 
-  // Create summaryCard immediately when GAMEOVER is detected.
-  // Called synchronously after every game input (click or key) so the card
-  // is ready before any follow-up click can re-enter the game's own handler.
   _checkAndCreateSummaryCard() {
-    if (
-      this.game &&
-      this.game.gameState === "GAMEOVER" &&
-      !this.summaryCard &&
-      !this._scoreReported
-    ) {
+    if (this.game && this.game.gameState === "GAMEOVER" && !this.summaryCard && !this._scoreReported) {
       const sessionScore = this._getSessionScore();
       const gameKey      = this._getGameKey();
       try {
-        // Create the card first; only mark/report score after successful creation.
+        // Assume SummaryCard class is defined elsewhere
         this.summaryCard = new SummaryCard(gameKey, sessionScore);
-        starBank.addStars(sessionScore);
-        starBank.updateRecord(gameKey, sessionScore);
+        if (typeof starBank !== 'undefined') {
+          starBank.addStars(sessionScore);
+          starBank.updateRecord(gameKey, sessionScore);
+        }
         this._scoreReported = true;
       } catch (err) {
-        console.error("[GameScreen] Failed to create SummaryCard", {
-          error: err,
-          gameType: this.gameType,
-          gameKey,
-          sessionScore,
-        });
-        this.summaryCard = null;
-        this._scoreReported = false;
+        console.error("[GameScreen] Failed to create SummaryCard", err);
       }
     }
   }
 
-  // Reset the current game and clear summary state
   _restartGame() {
-    if (this.gameType === "GAME_A") {
-      gameState.games.kaleido = new KaleidoPop(gameState.difficultyParams);
-      this.game = gameState.games.kaleido;
-    } else if (this.gameType === "GAME_B") {
-      gameState.games.jelly = new JellyJams(gameState.difficultyParams);
-      gameState.games.jelly.startGame();
-      this.game = gameState.games.jelly;
-    } else if (this.gameType === "GAME_C") {
-      gameState.games.tiptoe = new TiptoeTrails(gameState.difficultyParams);
-      this.game = gameState.games.tiptoe;
-    }
+    this._resetGameInstance();
     this.summaryCard    = null;
     this._scoreReported = false;
   }
 
   draw() {
-    // Set background color based on game
-    if (this.gameType === "GAME_A") {
-      background("#E6F0FF");
-    } else if (this.gameType === "GAME_B") {
-      background("#FFF5E6");
-    } else if (this.gameType === "GAME_C") {
-      background("#F0FFF0");
-    }
+    // Soft, pleasing background colors
+    if (this.gameType === "GAME_A") background("#F4F7FB"); // Softer blue-grey
+    else if (this.gameType === "GAME_B") background("#FFF9F2"); 
+    else if (this.gameType === "GAME_C") background("#F2FCF5"); 
 
-    // Draw game
+    // Always restore default cursor at the start of the frame
+    cursor(ARROW);
+
     if (this.game && !gameState.showInstructions) {
       this.game.draw();
     }
 
-    // Draw back button
     this.drawBackButton();
 
-    // Draw instruction overlay if active
     if (gameState.showInstructions && this.instructionOverlay) {
       this.instructionOverlay.draw();
     }
 
-    // --- SUMMARY CARD ---
-    // Detect first GAMEOVER frame, commit score to starBank, then slide card in.
     this._checkAndCreateSummaryCard();
 
-    // Draw the sliding summary card on top of everything
     if (this.summaryCard) {
       this.summaryCard.draw();
     }
   }
 
   drawBackButton() {
-    let cx = 35, cy = 35, r = 22;
+    // Use consistent responsive anchoring
+    let cx = max(40, width * 0.05); 
+    let cy = max(40, height * 0.06);
+    let r = 24; 
     let hover = dist(mouseX, mouseY, cx, cy) < r;
+    
+    // Smooth lerping scale
+    this.backBtnScale = lerp(this.backBtnScale, hover ? 1.15 : 1.0, 0.2);
+
     push();
-    drawingContext.shadowBlur = hover ? 14 : 4;
-    drawingContext.shadowColor = 'rgba(0,0,0,0.25)';
+    translate(cx, cy);
+    scale(this.backBtnScale); 
+
+    drawingContext.shadowBlur = hover ? 15 : 5;
+    drawingContext.shadowColor = 'rgba(0,0,0,0.15)';
     noStroke();
-    fill(255, hover ? 230 : 180);
-    circle(cx, cy, r * 2);
-    drawingContext.shadowBlur = 0;
-    stroke(80);
-    strokeWeight(2.5);
+    fill(255); 
+    circle(0, 0, r * 2);
+    drawingContext.shadowBlur = 0; 
+
+    stroke(hover ? (PALETTE?.pink || '#FFB7B2') : 100); 
+    strokeWeight(4);
     strokeCap(ROUND);
+    strokeJoin(ROUND);
     noFill();
+    
     beginShape();
-    vertex(cx + 6, cy - 9);
-    vertex(cx - 6, cy);
-    vertex(cx + 6, cy + 9);
+    vertex(4, -8);
+    vertex(-4, 0);
+    vertex(4, 8);
     endShape();
-    if (hover) cursor(HAND); else cursor(ARROW);
     pop();
+
+    if (hover && !this.summaryCard && !this.instructionOverlay) {
+        cursor(HAND);
+    }
   }
 
   handleClick() {
-    // --- Summary card takes full click priority ---
     if (this.summaryCard) {
-      if (this.summaryCard.isPlayAgainClicked()) {
+      if (this.summaryCard.isPlayAgainClicked && this.summaryCard.isPlayAgainClicked()) {
         this._restartGame();
         return true;
       }
-      if (this.summaryCard.isMenuClicked()) {
-        this.summaryCard    = null;
+      if (this.summaryCard.isMenuClicked && this.summaryCard.isMenuClicked()) {
+        this.summaryCard = null;
         this._scoreReported = false;
         gameState.setScreen(GAME_STATES.MENU);
         gameState.hideGameInstructions();
         return true;
       }
-      return true; // swallow all other clicks while card is open
+      return true; 
     }
 
-    // Back button
-    if (dist(mouseX, mouseY, 35, 35) < 22) {
+    let cx = max(40, width * 0.05);
+    let cy = max(40, height * 0.06);
+    if (dist(mouseX, mouseY, cx, cy) < 24) {
       gameState.setScreen(GAME_STATES.MENU);
       gameState.hideGameInstructions();
       return true;
     }
 
-    // Instruction overlay button
     if (gameState.showInstructions && this.instructionOverlay) {
-      if (this.instructionOverlay.isButtonClicked()) {
+      if (this.instructionOverlay.isButtonClicked && this.instructionOverlay.isButtonClicked()) {
         gameState.hideGameInstructions();
-        
-        // Reset game when instructions close
-        if (this.gameType === "GAME_A" && gameState.games.kaleido) {
-          gameState.games.kaleido = new KaleidoPop(gameState.difficultyParams);
-        } else if (this.gameType === "GAME_B" && gameState.games.jelly) {
-          gameState.games.jelly = new JellyJams(gameState.difficultyParams);
-          gameState.games.jelly.startGame();
-        } else if (this.gameType === "GAME_C" && gameState.games.tiptoe) {
-          gameState.games.tiptoe = new TiptoeTrails(gameState.difficultyParams);
-        }
-        
+        this._resetGameInstance();
         this.game = gameState.getGameInstance(this.gameType);
+        this.instructionOverlay = null;
         return true;
       }
       return false;
     }
 
-    // Game click handling
     if (this.game) {
-      if (this.gameType === "GAME_A" && this.game.checkClick) {
-        this.game.checkClick();
-      } else if (this.gameType === "GAME_B" && this.game.checkClick) {
-        this.game.checkClick();
-      } else if (
-        this.gameType === "GAME_C" &&
-        this.game.handleMouseClick
-      ) {
-        this.game.handleMouseClick();
-      }
-      // Immediately create summaryCard if this click just caused GAMEOVER.
-      // This prevents a rapid follow-up click from reaching the game's own
-      // restartGame() before draw() has had a chance to create the card.
+      if (this.gameType === "GAME_A" && this.game.checkClick) this.game.checkClick();
+      else if (this.gameType === "GAME_B" && this.game.checkClick) this.game.checkClick();
+      else if (this.gameType === "GAME_C" && this.game.handleMouseClick) this.game.handleMouseClick();
+      
       this._checkAndCreateSummaryCard();
     }
-
     return true;
   }
 
   handleKeyPress(keyCode) {
-    // Block input while summary card is visible
     if (this.summaryCard) return;
 
-    if (
-      keyCode === ENTER &&
-      this.gameType === "GAME_A" &&
-      this.game &&
-      this.game.gameState === "INPUT"
-    ) {
+    if (keyCode === ENTER && this.gameType === "GAME_A" && this.game && this.game.gameState === "INPUT") {
       this.game.submitAnswer();
-      // ENTER may have just triggered GAMEOVER; create the card immediately
-      // so the very next click is intercepted regardless of draw() timing.
       this._checkAndCreateSummaryCard();
     }
-  }
-
-  windowResized() {
-    // Games can handle their own resizing in draw()
   }
 }

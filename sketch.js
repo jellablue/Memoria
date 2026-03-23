@@ -58,6 +58,13 @@ function windowResized() {
   uiManager.handleWindowResize();
 }
 
+function mouseWheel(event) {
+  if (uiManager && uiManager.handleScroll) {
+    uiManager.handleScroll(event.delta);
+    return false;
+  }
+}
+
 function drawIdleScreen() {
   background(0, 100);
   fill(255);

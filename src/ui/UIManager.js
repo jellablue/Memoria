@@ -5,9 +5,9 @@ class UIManager {
       welcome: new WelcomeScreen(),
       ageSelect: new AgeSelectionScreen(),
       menu: new MenuScreen(),
-      gameA: null,
-      gameB: null,
-      gameC: null,
+      gameA: new GameScreen(GAME_STATES.GAME_A),
+      gameB: new GameScreen(GAME_STATES.GAME_B),
+      gameC: new GameScreen(GAME_STATES.GAME_C),
       profile: new ProfileScreen(),
     };
 
@@ -43,6 +43,8 @@ class UIManager {
   }
 
   draw() {
+
+    this.updateCurrentScreen();
     // Draw background and particles for non-game screens
     if (this.currentScreenType !== GAME_STATES.GAME_A &&
         this.currentScreenType !== GAME_STATES.GAME_B &&
@@ -123,13 +125,13 @@ class UIManager {
     } else if (screen === GAME_STATES.MENU) {
       this.currentScreen = this.screens.menu;
     } else if (screen === GAME_STATES.GAME_A) {
-      this.screens.gameA = new GameScreen(GAME_STATES.GAME_A);
+      if (this.screens.gameA.prepareForEntry) this.screens.gameA.prepareForEntry();
       this.currentScreen = this.screens.gameA;
     } else if (screen === GAME_STATES.GAME_B) {
-      this.screens.gameB = new GameScreen(GAME_STATES.GAME_B);
+      if (this.screens.gameB.prepareForEntry) this.screens.gameB.prepareForEntry();
       this.currentScreen = this.screens.gameB;
     } else if (screen === GAME_STATES.GAME_C) {
-      this.screens.gameC = new GameScreen(GAME_STATES.GAME_C);
+      if (this.screens.gameC.prepareForEntry) this.screens.gameC.prepareForEntry();
       this.currentScreen = this.screens.gameC;
     } else if (screen === GAME_STATES.RESULTS) {
       this.screens.profile.resetAnim();   // re-play draw-on animation
@@ -147,6 +149,18 @@ class UIManager {
 
   resetIdleScreen() {
     // Could add idle screen logic here if needed
+  }
+
+  handleScroll(delta) {
+    // Block scrolling if a transition is happening
+    if (this._transitioning || (this.cloudTransition && this.cloudTransition.isActive())) {
+      return;
+    }
+
+    // Route the scroll event to the current screen if it supports it
+    if (this.currentScreen && this.currentScreen.handleScroll) {
+      this.currentScreen.handleScroll(delta);
+    }
   }
 }
 

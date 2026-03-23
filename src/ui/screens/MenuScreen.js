@@ -1,77 +1,124 @@
 class MenuScreen {
   constructor() {
     this.menuButtons = [];
+    this.layout = {};
+    this._lastW = -1;
+    this._lastH = -1;
+    
+    // Animation states for UI elements
+    this.backBtnScale = 1.0;
+    this.profileBtnScale = 1.0;
+    
+    this.initButtons();
+  }
+
+  _getStarCardMetrics() {
+    const isNarrow = width < 980;
+    const pad = constrain(width * 0.02, 10, 24);
+    const cardW = constrain(width * (isNarrow ? 0.8 : 0.28), 260, 340);
+    const cardH = constrain(height * 0.35, 240, 280);
+    
+    // On narrow screens, place it at the bottom center. On wide screens, top right.
+    const x = isNarrow ? (width / 2 - cardW / 2) : (width - cardW - pad);
+    const y = isNarrow ? (height - cardH - pad) : pad;
+
+    return { pad, cardW, cardH, x, y, isNarrow };
+  }
+
+  _syncLayout() {
+    if (this._lastW === width && this._lastH === height) return;
+
+    const base = min(width, height);
+    const m = this._getStarCardMetrics();
+    
+    const btnW = constrain(width * 0.36, 260, 380);
+    const btnH = constrain(height * 0.12, 76, 96);
+    const gap = constrain(height * 0.03, 16, 26);
+    
+    // Shift content left on desktop to balance the Star Bank on the right
+    const centerX = m.isNarrow ? width / 2 : width * 0.4; 
+
+    this.layout = {
+      btnW,
+      btnH,
+      gap,
+      centerX,
+      titleY: height * 0.18,
+      subtitleY: height * 0.26,
+      startY: height * 0.35,
+      titleSize: constrain(base * 0.08, 38, 72),
+      subtitleSize: constrain(base * 0.04, 20, 36),
+    };
+
+    this._lastW = width;
+    this._lastH = height;
     this.initButtons();
   }
 
   initButtons() {
-    let btnW = 280;
-    let btnH = 70;
-    let startY = height / 2 + 10;
+    // Failsafe if layout hasn't synced
+    if (!this.layout.btnW) this._syncLayout();
+
+    let { btnW, btnH, gap, startY, centerX } = this.layout;
 
     this.menuButtons = [
       new MenuButton(
-        width / 2,
-        startY + 10,
-        btnW,
-        btnH,
-        "Kaleido-Pop",
-        PALETTE.pink,
-        "GAME_A"
+        centerX, startY, btnW, btnH,
+        "Kaleido-Pop", PALETTE?.pink || "#FFB7B2", "GAME_A",
+        "Pattern memory and visual matching"
       ),
       new MenuButton(
-        width / 2,
-        startY + 100,
-        btnW,
-        btnH,
-        "Jelly Jams",
-        PALETTE.blue,
-        "GAME_B"
+        centerX, startY + btnH + gap, btnW, btnH,
+        "Jelly Jams", PALETTE?.blue || "#B5CDF5", "GAME_B",
+        "Sound sequence recall and rhythm focus"
       ),
       new MenuButton(
-        width / 2,
-        startY + 190,
-        btnW,
-        btnH,
-        "Tiptoe Trails",
-        PALETTE.green,
-        "GAME_C"
+        centerX, startY + (btnH + gap) * 2, btnW, btnH,
+        "Tiptoe Trails", PALETTE?.green || "#A0EACD", "GAME_C",
+        "Path memory and spatial navigation"
       ),
     ];
   }
 
   draw() {
-    drawingContext.shadowBlur = 20;
-    drawingContext.shadowColor = "rgba(255, 255, 255, 0.8)";
+    this._syncLayout();
+    
+    // Default cursor (buttons will override if hovered)
+    cursor(ARROW);
 
-  // TITLE: TO BE CHANGED    
-    fill(255);
-    textSize(80);
+    // --- 1. Typography (Header) ---
+    drawingContext.shadowBlur = 15;
+    drawingContext.shadowColor = "rgba(255, 255, 255, 0.7)";
+    fill(PALETTE?.text || 60);
+    textSize(this.layout.titleSize);
     textStyle(BOLD);
-    text("Memoria", width / 2, height / 2 - 180);
+    textAlign(CENTER, CENTER);
+    text("Choose an Activity", this.layout.centerX, this.layout.titleY);
+    drawingContext.shadowBlur = 0; // Reset shadow
 
-    textSize(50);
-    fill(PALETTE.purple);
-    stroke(255);
-    strokeWeight(4);
-    text("Blu's Wonderland", width / 2, height / 2 - 110);
+    textSize(this.layout.subtitleSize);
+    fill(120);
+    textStyle(NORMAL);
+    text("Train your brain with Blu!", this.layout.centerX, this.layout.subtitleY);
 
-    drawingContext.shadowBlur = 0;
-    noStroke();
-
+    // --- 2. Main Menu Buttons ---
     for (let btn of this.menuButtons) {
-      btn.display();
+      if (btn.display) btn.display();
     }
 
-    this.drawBackButton();
+    // --- 3. UI Elements ---
     this.drawStarBank();
+    this.drawBackButton();
   }
 
-  // ── Bounds of the "Brain Profile" button inside the StarBank card ──
   _brainBtnBounds() {
-    const PAD = 16, CARD_W = 300;
-    const x   = width - CARD_W - PAD;
-    return { x: x + 14, y: PAD + 182, w: CARD_W - 28, h: 32 };
+    const m = this._getStarCardMetrics();
+    return {
+      x: m.x + m.cardW * 0.05,
+      y: m.y + m.cardH * 0.8, // Proportional anchoring
+      w: m.cardW * 0.9,
+      h: m.cardH * 0.15,
+    };
   }
 
   _isHoverBrainBtn() {
@@ -81,155 +128,174 @@ class MenuScreen {
   }
 
   drawStarBank() {
-    const PAD    = 16;
-    const CARD_W = 330;
-    const CARD_H = 260;         
-    const x      = width - CARD_W - PAD;   // top-right corner
-    const y      = PAD;
-
-    // Card shadow + body
-    push();
-    drawingContext.shadowBlur  = 18;
-    drawingContext.shadowColor = "rgba(0,0,0,0.14)";
-    fill(255, 150);
+    const m = this._getStarCardMetrics();
     
-    rect(x, y, CARD_W, CARD_H, 16);
-    drawingContext.shadowBlur = 0;
+    // Gentle floating animation
+    let floatY = sin(frameCount * 0.03) * 4;
+    
+    push();
+    translate(0, floatY); // Apply float to the whole card
 
-    // ── Grand total row ──
-    const rowY = y + 28;
+    // --- Card Background (Glassmorphism) ---
+    drawingContext.shadowBlur = 20;
+    drawingContext.shadowColor = "rgba(0,0,0,0.1)";
+    fill(255, 220); // Semi-transparent white
+    stroke(255); // Solid white border for glass effect
+    strokeWeight(2);
+    rect(m.x, m.y, m.cardW, m.cardH, 20);
+    drawingContext.shadowBlur = 0;
+    noStroke();
+
+    // --- Grand Total Row ---
+    const rowY = m.y + m.cardH * 0.15;
     textAlign(LEFT, CENTER);
     textStyle(BOLD);
-    textSize(30);
+    textSize(constrain(m.cardW * 0.1, 24, 34));
     fill("#E6A817");
-    text("⭐", x + 14, rowY + 10);
+    text("⭐", m.x + m.cardW * 0.08, rowY + m.cardH * 0.02);
 
-    textSize(25);
+    textSize(constrain(m.cardW * 0.09, 20, 28));
     fill(60);
-    text(starBank.totalStars, x + 60, rowY);
+    text(typeof starBank !== 'undefined' ? starBank.totalStars : "0", m.x + m.cardW * 0.25, rowY);
 
-    textSize(18);
+    textSize(constrain(m.cardW * 0.05, 12, 16));
     textStyle(NORMAL);
-    fill(140);
-    text("total stars", x + 60, rowY + 22);
+    fill(120);
+    text("total stars", m.x + m.cardW * 0.25, rowY + m.cardH * 0.09);
 
-    // ── Level badge ──
-    const badgeY = rowY + 55;
-    const badgeW = CARD_W - 28;
-    fill(starBank.getLevelBadgeColor());
-    noStroke();
-    rect(x + 14, badgeY - 13, badgeW, 26, 13);
+    // --- Level Badge ---
+    const badgeY = rowY + m.cardH * 0.22;
+    const badgeW = m.cardW * 0.84;
+    const badgeX = m.x + m.cardW * 0.08;
+    
+    fill(typeof starBank !== 'undefined' ? starBank.getLevelBadgeColor() : PALETTE?.pink || '#FFB7B2');
+    rect(badgeX, badgeY - m.cardH * 0.05, badgeW, m.cardH * 0.12, 12);
+    
     fill(60);
-    textSize(18);
+    textSize(constrain(m.cardW * 0.05, 12, 16));
     textStyle(BOLD);
     textAlign(CENTER, CENTER);
-    text(starBank.getLevel(), x + 14 + badgeW / 2, badgeY);
+    text(typeof starBank !== 'undefined' ? starBank.getLevel() : "Level 1", badgeX + badgeW / 2, badgeY + m.cardH * 0.01);
 
-    // ── Per-game records ──
+    // --- Per-Game Records ---
     const records = [
-      { label: "🌸Kaleido", val: starBank.kaleidoRecord },
-      { label: "🎵Jelly",   val: starBank.jellyRecord   },
-      { label: "👣Tiptoe",  val: starBank.tiptoeRecord  },
+      { label: "🌸 Kaleido", val: typeof starBank !== 'undefined' ? starBank.kaleidoRecord : 0 },
+      { label: "🎵 Jelly",   val: typeof starBank !== 'undefined' ? starBank.jellyRecord : 0 },
+      { label: "👣 Tiptoe",  val: typeof starBank !== 'undefined' ? starBank.tiptoeRecord : 0 },
     ];
 
-    const recStartY = badgeY + 22;
-    const colW      = CARD_W / 3;
-
-    textSize(16);
-    textStyle(NORMAL);
+    const recStartY = badgeY + m.cardH * 0.15;
+    const colW = m.cardW / 3;
 
     for (let i = 0; i < records.length; i++) {
-      const rx = x + i * colW + colW / 2;
-
+      const rx = m.x + i * colW + colW / 2;
       fill(140);
-      textAlign(CENTER, CENTER);
-      text(records[i].label, rx, recStartY + 12);
-
-      fill(60);
-      textStyle(BOLD);
-      textSize(18);
-      text(records[i].val, rx, recStartY + 35);
       textStyle(NORMAL);
-      textSize(16);
+      textSize(constrain(m.cardW * 0.045, 11, 14));
+      text(records[i].label, rx, recStartY);
+
+      fill(80);
+      textStyle(BOLD);
+      textSize(constrain(m.cardW * 0.06, 14, 18));
+      text(records[i].val, rx, recStartY + m.cardH * 0.08);
     }
 
-    // ── Divider ──
-    stroke(220);
-    strokeWeight(1);
-    line(x + 14, y + 171, x + CARD_W - 14, y + 171);
+    // --- Divider Line ---
+    stroke(230);
+    strokeWeight(2);
+    strokeCap(ROUND);
+    let lineY = m.y + m.cardH * 0.72;
+    line(m.x + m.cardW * 0.08, lineY, m.x + m.cardW * 0.92, lineY);
     noStroke();
 
-    // ── Brain Profile button ──
-    const b      = this._brainBtnBounds();
+    // --- Brain Profile Button ---
+    const b = this._brainBtnBounds();
     const hoverB = this._isHoverBrainBtn();
-    fill(hoverB ? PALETTE.purple : "#EDE8F0");
-    noStroke();
-    rect(b.x, b.y, b.w, b.h, 16);
-    fill(hoverB ? 255 : PALETTE.purple);
-    textSize(13);
+    
+    // Smooth scaling for button
+    this.profileBtnScale = lerp(this.profileBtnScale, hoverB ? 1.05 : 1.0, 0.2);
+    
+    push();
+    translate(b.x + b.w / 2, b.y + b.h / 2); // Translate to center of button for scaling
+    scale(this.profileBtnScale);
+    
+    fill(hoverB ? (PALETTE?.purple || "#9B5DE5") : "#F0F0F5");
+    rectMode(CENTER);
+    rect(0, 0, b.w, b.h, 12);
+    
+    fill(hoverB ? 255 : (PALETTE?.purple || "#9B5DE5"));
+    textSize(constrain(m.cardW * 0.045, 12, 15));
     textStyle(BOLD);
     textAlign(CENTER, CENTER);
-    text("\uD83E\uDDE0  View Brain Profile  \u2192", x + CARD_W / 2, b.y + b.h / 2);
+    text("\uD83E\uDDE0 View Brain Profile \u2192", 0, 0);
+    pop();
 
     if (hoverB) cursor(HAND);
-
-    pop();
+    pop(); // End main floating translation
   }
 
   drawBackButton() {
-    let cx = 35, cy = 35, r = 22;
+    let cx = max(40, width * 0.05); 
+    let cy = max(40, height * 0.06);
+    let r = 24; 
     let hover = dist(mouseX, mouseY, cx, cy) < r;
+    
+    this.backBtnScale = lerp(this.backBtnScale, hover ? 1.15 : 1.0, 0.2);
+
     push();
-    drawingContext.shadowBlur = hover ? 14 : 4;
-    drawingContext.shadowColor = 'rgba(0,0,0,0.25)';
+    translate(cx, cy);
+    scale(this.backBtnScale); 
+
+    drawingContext.shadowBlur = hover ? 15 : 5;
+    drawingContext.shadowColor = 'rgba(0,0,0,0.15)';
     noStroke();
-    fill(255, hover ? 230 : 180);
-    circle(cx, cy, r * 2);
-    drawingContext.shadowBlur = 0;
-    stroke(80);
-    strokeWeight(2.5);
+    fill(255); 
+    circle(0, 0, r * 2);
+    drawingContext.shadowBlur = 0; 
+
+    stroke(hover ? (PALETTE?.pink || '#FFB7B2') : 100); 
+    strokeWeight(4);
     strokeCap(ROUND);
+    strokeJoin(ROUND);
     noFill();
+    
     beginShape();
-    vertex(cx + 6, cy - 9);
-    vertex(cx - 6, cy);
-    vertex(cx + 6, cy + 9);
+    vertex(4, -8);
+    vertex(-4, 0);
+    vertex(4, 8);
     endShape();
-    if (hover) cursor(HAND); else cursor(ARROW);
     pop();
+
+    if (hover) cursor(HAND);
   }
 
   handleClick() {
+    let cx = max(40, width * 0.05);
+    let cy = max(40, height * 0.06);
+    
     // Check back button
-    if (dist(mouseX, mouseY, 35, 35) < 22) {
+    if (dist(mouseX, mouseY, cx, cy) < 24) {
       gameState.setScreen(GAME_STATES.AGE_SELECT);
+      if (typeof audioManager !== 'undefined') audioManager.playSound("petal");
       return true;
     }
 
     // Check menu buttons
     for (let btn of this.menuButtons) {
-      if (btn.isClicked()) {
-        if (btn.action === "GAME_A") {
-          gameState.showGameInstructions("GAME_A");
-          if (audioManager) audioManager.playSound("petal");
-          uiManager.requestTransition(GAME_STATES.GAME_A);
-        } else if (btn.action === "GAME_B") {
-          gameState.showGameInstructions("GAME_B");
-          if (audioManager) audioManager.playSound("petal");
-          uiManager.requestTransition(GAME_STATES.GAME_B);
-        } else if (btn.action === "GAME_C") {
-          gameState.showGameInstructions("GAME_C");
-          if (audioManager) audioManager.playSound("petal");
-          uiManager.requestTransition(GAME_STATES.GAME_C);
-        }
+      if (btn.isClicked && btn.isClicked()) {
+        if (typeof audioManager !== 'undefined') audioManager.playSound("petal");
+        gameState.showGameInstructions(btn.action);
+        uiManager.requestTransition(btn.action);
         return true;
       }
     }
 
-    // Brain Profile button inside the StarBank card
+    // Brain Profile button
+    // Note: Adjust mouse check to account for the floatY animation offset if necessary
+    // But since the button hitbox is relatively large, the 4px drift usually isn't an issue.
     if (this._isHoverBrainBtn()) {
-      if (audioManager) audioManager.playSound("petal");
-      gameState.setScreen(GAME_STATES.RESULTS);
+      if (typeof audioManager !== 'undefined') audioManager.playSound("petal");
+      gameState.setScreen(GAME_STATES.RESULTS); // Assuming RESULTS is your profile screen
       return true;
     }
 
@@ -237,6 +303,8 @@ class MenuScreen {
   }
 
   windowResized() {
-    this.initButtons();
+    this._lastW = -1;
+    this._lastH = -1;
+    this._syncLayout();
   }
 }

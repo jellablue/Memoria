@@ -3,7 +3,7 @@ class JellyJams extends Game {
     super(difficultyParams);
     this.gridSize = 3;
     this.jellies = [];
-    this.gap = 20;
+    this.gap = 25;
     this.cellSize = 100;
 
     // --- SCORING & PROGRESSION ---
@@ -13,75 +13,121 @@ class JellyJams extends Game {
     
     this.sequence = [];
     this.playerStep = 0;
-    this.gameState = "IDLE"; // IDLE, WATCH, INPUT, RESULT, GAMEOVER
+    this.gameState = "IDLE"; 
     
     this.playbackIndex = 0;
     this.playbackTimer = 0;
     this.playbackSpeed = 60;
     this.isReverse = false;
 
+    // Visual feedback timer
+    this.flashTimer = 0;
+
     // Audio
     this.osc = new p5.Oscillator("sine");
     this.osc.amp(0);
     this.osc.start();
-    this.notes = [261.63, 293.66, 329.63, 349.23, 392.0, 440.0, 493.88, 523.25, 587.33];
+    this.notes = [261.63, 293.66, 329.63, 392.00, 440.00, 523.25, 587.33, 659.25, 783.99];
 
     // Mascot
     this.blu = {
-      x: width / 2,
-      y: height / 2,
-      targetX: width / 2,
-      targetY: height / 2,
-      size: 40,
+      x: 0, y: 0, targetX: 0, targetY: 0, size: 40,
     };
-    this.standbyPos = { x: 100, y: height - 150 }; // Moved up slightly for HUD
-
-    this.initGrid();
+    
+    // Layout tracking 
+    this._lastW = -1;
+    this._lastH = -1;
+    
+    this.initJellyArray();
   }
 
-  initGrid() {
-    let startX = width / 2 - (this.gridSize * this.cellSize + (this.gridSize - 1) * this.gap) / 2;
-    let startY = height / 2 - (this.gridSize * this.cellSize + (this.gridSize - 1) * this.gap) / 2;
+  initJellyArray() {
+    let jellyColors = [
+      PALETTE?.pink || "#FFB7B2", PALETTE?.blue || "#B5CDF5", 
+      PALETTE?.yellow || "#FDFD96", PALETTE?.green || "#A0EACD", 
+      PALETTE?.purple || "#C3B1E1"
+    ];
 
-    for (let r = 0; r < this.gridSize; r++) {
-      for (let c = 0; c < this.gridSize; c++) {
-        let x = startX + c * (this.cellSize + this.gap);
-        let y = startY + r * (this.cellSize + this.gap);
-        let baseColor = random([PALETTE.pink, PALETTE.blue, PALETTE.yellow, PALETTE.purple]);
-        
-        this.jellies.push({
-          x: x, y: y, w: this.cellSize, h: this.cellSize,
-          color: baseColor, active: false, animTimer: 0,
-        });
+    this.jellies = [];
+    for (let i = 0; i < this.gridSize * this.gridSize; i++) {
+      this.jellies.push({
+        x: 0, y: 0, w: 0, h: 0, 
+        color: random(jellyColors), 
+        active: false, 
+        animTimer: 0,
+        scale: 1.0 
+      });
+    }
+  }
+
+  // FIXED: Centers the grid perfectly in the middle of the screen
+  _syncLayout() {
+    if (this._lastW !== width || this._lastH !== height) {
+      
+      this.cellSize = constrain(width * 0.11, 70, 115);
+      
+      let gridCenterX = width / 2; 
+      let gridCenterY = height * 0.52; // Just slightly down to make room for the top text
+
+      let totalSpan = (this.gridSize * this.cellSize) + ((this.gridSize - 1) * this.gap);
+      let startX = gridCenterX - totalSpan / 2 + this.cellSize / 2;
+      let startY = gridCenterY - totalSpan / 2 + this.cellSize / 2;
+
+      let index = 0;
+      for (let r = 0; r < this.gridSize; r++) {
+        for (let c = 0; c < this.gridSize; c++) {
+          if (this.jellies[index]) {
+            this.jellies[index].x = startX + c * (this.cellSize + this.gap);
+            this.jellies[index].y = startY + r * (this.cellSize + this.gap);
+            this.jellies[index].w = this.cellSize;
+            this.jellies[index].h = this.cellSize;
+          }
+          index++;
+        }
       }
+
+      // Standby position for Blu during the player's turn
+      this.standbyPos = { x: width * 0.2, y: height * 0.8 }; 
+      
+      this._lastW = width;
+      this._lastH = height;
     }
   }
 
   draw() {
+    this._syncLayout();
     this.handleLogic();
     this.updateBlu();
     
-    // Draw Game Elements
     this.drawVisuals(); 
     this.drawBlu();
+
+    // --- DRAW ERROR FLASH OVERLAY ---
+    if (this.flashTimer > 0) {
+      push();
+      // Multiplied by 10 to give a smooth alpha fade (150 -> 0)
+      fill(211, 47, 47, this.flashTimer * 10); 
+      noStroke();
+      rectMode(CORNER);
+      rect(0, 0, width, height);
+      this.flashTimer--;
+      pop();
+    }
     
-    // Draw UI Overlay (HUD + Popups)
     this.handleUI();
   }
 
   handleLogic() {
-    // 1. Jelly Animations
     for (let j of this.jellies) {
       if (j.active) {
         j.animTimer++;
-        if (j.animTimer > 20) {
+        if (j.animTimer > 25) { 
           j.active = false;
           j.animTimer = 0;
         }
       }
     }
 
-    // 2. Sequence Playback Logic
     if (this.gameState === "WATCH") {
       this.playbackTimer++;
 
@@ -89,8 +135,7 @@ class JellyJams extends Game {
         this.playbackTimer = 0;
 
         if (this.playbackIndex < this.sequence.length) {
-          let jellyIndex = this.sequence[this.playbackIndex];
-          this.activateJelly(jellyIndex);
+          this.activateJelly(this.sequence[this.playbackIndex]);
           this.playbackIndex++;
         } else {
           this.gameState = "INPUT";
@@ -101,77 +146,87 @@ class JellyJams extends Game {
   }
 
   drawVisuals() {
+    rectMode(CENTER);
+
     for (let i = 0; i < this.jellies.length; i++) {
       let j = this.jellies[i];
+      let hover = this.isHovering(i) && this.gameState === "INPUT";
+
+      let targetScale = 1.0;
+      if (j.active) targetScale = 1.15; 
+      else if (hover) targetScale = 1.05; 
+      else targetScale = 1.0 + sin(frameCount * 0.05 + i) * 0.02; 
+
+      j.scale = lerp(j.scale, targetScale, 0.2);
+
+      push();
+      translate(j.x, j.y);
+      scale(j.scale);
 
       if (j.active) {
+        drawingContext.shadowBlur = 30;
+        drawingContext.shadowColor = j.color;
         fill(255);
         stroke(j.color);
-        strokeWeight(4);
-      } else if (this.isHovering(i) && this.gameState === "INPUT") {
-        fill(lerpColor(color(j.color), color(255), 0.4));
-        noStroke();
+        strokeWeight(6);
+      } else if (hover) {
+        drawingContext.shadowBlur = 15;
+        drawingContext.shadowColor = "rgba(0,0,0,0.15)";
+        fill(lerpColor(color(j.color), color(255), 0.3));
+        stroke(255);
+        strokeWeight(3);
+        cursor(HAND);
       } else {
+        drawingContext.shadowBlur = 10;
+        drawingContext.shadowColor = "rgba(0,0,0,0.05)";
         noStroke();
         fill(j.color);
       }
 
-      rect(j.x, j.y, j.w, j.h, 20);
-      noStroke();
+      rect(0, 0, j.w, j.h, 25); 
+      drawingContext.shadowBlur = 0; 
+      pop();
     }
+    rectMode(CORNER);
   }
 
   startGame() {
     this.level = 1;
     this.lives = 3;
     this.score = 0;
+    this.flashTimer = 0; // Reset flash on restart
     this.sequence = [];
-    
     let startCount = this.difficultyParams.jellyStartLength || 3;
-    for (let i=0; i < startCount; i++) {
-        this.sequence.push(floor(random(0, 9)));
-    }
-    
+    for (let i=0; i < startCount; i++) this.sequence.push(floor(random(0, 9)));
     this.startRound();
   }
 
   startRound() {
-    // Logic to start the sequence playback
-    if (this.level > 1) {
-        // Add one new step per level
-        this.sequence.push(floor(random(0, 9)));
-    }
-
-    // Twist Mechanic Check
-    if (this.level >= 3 && random() < (this.difficultyParams.jellyTwistChance || 0.3)) {
-      this.isReverse = true;
-    } else {
-      this.isReverse = false;
-    }
-
+    if (this.level > 1) this.sequence.push(floor(random(0, 9)));
+    this.isReverse = (this.level >= 3 && random() < (this.difficultyParams.jellyTwistChance || 0.3));
     this.gameState = "WATCH";
     this.playerStep = 0;
     this.playbackIndex = 0;
-    this.playbackTimer = -30; // Small delay before starting
-    
-    // Speed scaling
+    this.playbackTimer = -30; 
     let baseSpeed = this.difficultyParams.jellySpeed || 60;
     this.playbackSpeed = max(20, baseSpeed - (this.level * 2));
-    
-    console.log("Level " + this.level + " Sequence: " + this.sequence);
   }
 
   activateJelly(index, isPlayerClick = false) {
     if (index >= 0 && index < this.jellies.length) {
-      this.jellies[index].active = true;
-      this.jellies[index].animTimer = 0;
+      let j = this.jellies[index];
+      j.active = true;
+      j.animTimer = 0;
 
+      // FIXED: Blu now sits exactly in the upper-middle of the jelly!
       if (this.gameState === "WATCH") {
-        this.blu.targetX = this.jellies[index].x + this.jellies[index].w / 2;
-        this.blu.targetY = this.jellies[index].y + this.jellies[index].h / 2 - 20;
+        this.blu.targetX = j.x;
+        // Since jelly is drawn from center, j.y is the exact middle. 
+        // We move Blu up just slightly (1/4 of the height) so he looks like he's sitting on top.
+        this.blu.targetY = j.y - (j.h / 3); 
       }
 
-      if (this.osc) {
+      if (this.osc && typeof getAudioContext !== 'undefined' && getAudioContext().state === 'running') {
         this.osc.freq(this.notes[index], 0.1);
         this.osc.amp(0.5, 0.05);
         this.osc.amp(0, 0.2, 0.1);
@@ -180,47 +235,31 @@ class JellyJams extends Game {
   }
 
   checkClick() {
-    // --- 1. HANDLE POPUP CLICKS (Result/Game Over) ---
     if (this.gameState === "RESULT" || this.gameState === "GAMEOVER" || this.gameState === "IDLE") {
         this.checkPopupClick();
         return;
     }
-
     if (this.gameState !== "INPUT") return;
 
-    // --- 2. HANDLE GAMEPLAY CLICKS ---
     for (let i = 0; i < this.jellies.length; i++) {
         if (this.isHovering(i)) {
           this.activateJelly(i, true);
 
-          // Calculate Expected Input
-          let expectedIndex;
-          if (this.isReverse) {
-            expectedIndex = this.sequence[this.sequence.length - 1 - this.playerStep];
-          } else {
-            expectedIndex = this.sequence[this.playerStep];
-          }
+          let expectedIndex = this.isReverse ? this.sequence[this.sequence.length - 1 - this.playerStep] : this.sequence[this.playerStep];
 
           if (i === expectedIndex) {
-            // CORRECT CLICK
             this.playerStep++;
             if (this.playerStep >= this.sequence.length) {
-              // ROUND COMPLETE
               this.score += (this.sequence.length * 10);
-              this.gameState = "RESULT"; // Show "Level Complete" card
+              this.gameState = "RESULT"; 
             }
           } else {
-            // WRONG CLICK
+            // MISTAKE LOGIC 
             this.lives--;
-            // Shake Effect or Sound here
+            this.flashTimer = 15; // Set flash timer to draw red overlay for next 15 frames
+
             if (this.lives <= 0) {
                 this.gameState = "GAMEOVER";
-            } else {
-                // Optional: Replay the sequence if they fail but have lives?
-                // For now, let's just let them continue inputting or reset input?
-                // Hard mode: Reset input. Easy mode: Just ignore the click.
-                // Let's Flash Screen Red briefly
-                background(255, 200, 200); 
             }
           }
           return;
@@ -228,71 +267,87 @@ class JellyJams extends Game {
     }
   }
 
-  // --- UI & SCORING SYSTEM (MATCHING KALEIDOPOP) ---
   handleUI() {
     noStroke();
-    textSize(24);
+    let topY = height * 0.1;
     
-    // 1. Lower Left HUD
-    textAlign(LEFT, BOTTOM);
-    fill(PALETTE.text || 50);
-    
-    let hudX = 30;
-    let hudY = height - 30; 
-
-    text("Lives: " + "❤️".repeat(this.lives), hudX, hudY - 70);
-    text("Level: " + this.level, hudX, hudY - 40);
-    text("Score: " + this.score, hudX, hudY - 10);
-
-    // 2. Instructions / Top Text
+    // --- TOP CENTER: Status Instructions ---
+    push();
     textAlign(CENTER, CENTER);
-    if (this.gameState === "IDLE") {
-       this.drawPopupCard("Jelly Jams", "START GAME");
-    } 
-    else if (this.gameState === "WATCH") {
-       fill(PALETTE.purple);
-       text("Watch Blu memorise the tune...", width/2, 50);
+    if (this.gameState === "WATCH") {
+       fill(255, 200);
+       rectMode(CENTER);
+       rect(width / 2, topY, 380, 50, 25);
+       fill(PALETTE?.purple || 80);
+       textSize(22); textStyle(BOLD);
+       text("Watch Blu memorise the tune...", width / 2, topY);
     } 
     else if (this.gameState === "INPUT") {
+       fill(255, 220);
+       rectMode(CENTER);
+       rect(width / 2, topY, 400, 60, 30);
+       
        if (this.isReverse) {
-         fill("#D32F2F"); // Red warning
-         textSize(28); textStyle(BOLD);
-         text("↺ REWIND! Input Backwards! ↺", width/2, 50);
+         fill("#D32F2F"); 
+         textSize(24); textStyle(BOLD);
+         text("↺ REWIND! Input Backwards! ↺", width / 2, topY);
        } else {
-         fill(PALETTE.green);
-         text("Your Turn! Replay the tune.", width/2, 50);
+         fill(PALETTE?.green || "#5DC98A");
+         textSize(24); textStyle(BOLD);
+         text("Your Turn! Replay the tune.", width / 2, topY);
        }
-       textStyle(NORMAL);
     }
+    pop();
+
+    // --- LEFT PANEL: HUD ---
+    let hudX = max(40, width * 0.05); 
+    let hudY = height / 2 - 100;
     
-    // 3. Popups
-    else if (this.gameState === "RESULT") {
-       this.drawPopupCard("Level Complete!", "NEXT LEVEL >>");
-    } 
-    else if (this.gameState === "GAMEOVER") {
-       this.drawPopupCard("Game Over", "TRY AGAIN");
+    fill(255, 180); noStroke();
+    rect(hudX, hudY, 160, 200, 20); 
+    
+    fill(80); textAlign(LEFT, TOP);
+    textSize(14); textStyle(BOLD);
+    text("LIVES", hudX + 20, hudY + 20);
+    textSize(20);
+    text("❤️".repeat(this.lives), hudX + 20, hudY + 40);
+
+    textSize(14); textStyle(BOLD); fill(80);
+    text("LEVEL", hudX + 20, hudY + 80);
+    textSize(24); fill(PALETTE?.blue || "#5BACE0");
+    text(this.level, hudX + 20, hudY + 100);
+
+    textSize(14); textStyle(BOLD); fill(80);
+    text("SCORE", hudX + 20, hudY + 140);
+    textSize(24); fill(PALETTE?.green || "#5DC98A");
+    text(this.score, hudX + 20, hudY + 160);
+    
+    if (this.isReverse) {
+      fill("#D32F2F");
+      textSize(14); textAlign(CENTER, TOP);
+      text("REVERSE MODE", hudX + 80, hudY + 220);
     }
+    pop();
+
+    // --- POPUPS ---
+    if (this.gameState === "IDLE") this.drawPopupCard("Jelly Jams", "START GAME");
+    else if (this.gameState === "RESULT") this.drawPopupCard("Level Complete!", "NEXT LEVEL >>");
+    else if (this.gameState === "GAMEOVER") this.drawPopupCard("Game Over", "TRY AGAIN");
   }
 
-  // --- POPUP CARD SYSTEM ---
   drawPopupCard(title, btnLabel) {
-      // Blur Background
       fill(0, 100); noStroke();
       rect(0, 0, width, height); 
       
-      // Card Body
-      let cardW = 400; let cardH = 300;
-      let cardX = width / 2; let cardY = height / 2;
+      let cardW = 400, cardH = 300;
+      let cardX = width / 2, cardY = height / 2; // FIXED: Centered
       
       drawingContext.shadowBlur = 30;
       drawingContext.shadowColor = 'rgba(0,0,0,0.2)';
-      fill(255);
-      rectMode(CENTER);
+      fill(255); rectMode(CENTER);
       rect(cardX, cardY, cardW, cardH, 20);
-      rectMode(CORNER);
-      drawingContext.shadowBlur = 0;
+      rectMode(CORNER); drawingContext.shadowBlur = 0;
 
-      // Text Content
       fill(50); textSize(32); textStyle(BOLD); textAlign(CENTER, CENTER);
       text(title, cardX, cardY - 80);
       
@@ -300,96 +355,75 @@ class JellyJams extends Game {
       if (this.gameState === "IDLE") {
           text("Follow the musical jellies!", cardX, cardY - 20);
       } else if (this.gameState === "RESULT") {
-          fill("#2E7D32");
-          text("Sequence Matched!", cardX, cardY - 30);
-          fill(50);
-          text(`+${this.sequence.length * 10} Points`, cardX, cardY + 10);
+          fill("#2E7D32"); text("Sequence Matched!", cardX, cardY - 30);
+          fill(50); text(`+${this.sequence.length * 10} Points`, cardX, cardY + 10);
       } else if (this.gameState === "GAMEOVER") {
           text(`Final Score: ${this.score}`, cardX, cardY - 30);
           text(`Level Reached: ${this.level}`, cardX, cardY + 10);
       }
 
-      // Button
-      let btnW = 220; let btnH = 50; let btnY = cardY + 80;
+      let btnW = 220, btnH = 50, btnY = cardY + 80;
+      let isHovered = mouseX > cardX - btnW/2 && mouseX < cardX + btnW/2 && mouseY > btnY - btnH/2 && mouseY < btnY + btnH/2;
       
-      if (dist(mouseX, mouseY, cardX, btnY) < btnW/2) {
-          fill("#2A3B75"); cursor(HAND);
-      } else {
-          fill("#3E5296"); cursor(ARROW);
-      }
+      fill(isHovered ? (PALETTE?.purple || "#9B5DE5") : (PALETTE?.blue || "#5BACE0"));
+      if (isHovered) cursor(HAND);
       
-      rectMode(CENTER);
-      rect(cardX, btnY, btnW, btnH, 25);
-      rectMode(CORNER);
-      
-      fill(255); textSize(20); textStyle(BOLD);
+      rectMode(CENTER); rect(cardX, btnY, btnW, btnH, 25); rectMode(CORNER);
+      fill(255); textSize(18); textStyle(BOLD);
       text(btnLabel, cardX, btnY);
       textStyle(NORMAL);
   }
 
   checkPopupClick() {
-      let cardX = width / 2;
-      let cardY = height / 2;
-      let btnY = cardY + 80;
-      let btnW = 220;
-      let btnH = 50;
+      let cardX = width / 2, btnY = height / 2 + 80, btnW = 220, btnH = 50;
       
-      if (mouseX > cardX - btnW/2 && mouseX < cardX + btnW/2 &&
-          mouseY > btnY - btnH/2 && mouseY < btnY + btnH/2) {
-            
-          if (this.gameState === "IDLE" || this.gameState === "GAMEOVER") {
-              this.startGame();
-          } else if (this.gameState === "RESULT") {
-              this.level++;
-              this.startRound();
-          }
+      if (mouseX > cardX - btnW/2 && mouseX < cardX + btnW/2 && mouseY > btnY - btnH/2 && mouseY < btnY + btnH/2) {
+          if (this.gameState === "IDLE" || this.gameState === "GAMEOVER") this.startGame();
+          else if (this.gameState === "RESULT") { this.level++; this.startRound(); }
       }
   }
 
   isHovering(index) {
     let j = this.jellies[index];
     return (
-      mouseX > j.x && mouseX < j.x + j.w && mouseY > j.y && mouseY < j.y + j.h
+      mouseX > j.x - j.w/2 && mouseX < j.x + j.w/2 && 
+      mouseY > j.y - j.h/2 && mouseY < j.y + j.h/2
     );
   }
 
   updateBlu() {
+    // FIXED: Blu idle targets are directly in the center now
     if (this.gameState === "IDLE" || this.gameState === "RESULT" || this.gameState === "GAMEOVER") {
       this.blu.targetX = width / 2;
-      this.blu.targetY = height / 2 - 150; // Sit above the card
+      this.blu.targetY = height / 2 - 180; // Hover safely above the popup card
     } else if (this.gameState === "INPUT") {
       this.blu.targetX = this.standbyPos.x;
       this.blu.targetY = this.standbyPos.y;
     }
 
-    this.blu.x = lerp(this.blu.x, this.blu.targetX, 0.1);
-    this.blu.y = lerp(this.blu.y, this.blu.targetY, 0.1);
+    this.blu.x = lerp(this.blu.x, this.blu.targetX, 0.15);
+    this.blu.y = lerp(this.blu.y, this.blu.targetY, 0.15);
   }
 
   drawBlu() {
     push();
     translate(this.blu.x, this.blu.y);
 
-    // Shadow
     noStroke(); fill(0, 50); ellipse(0, 20, 30, 10);
 
-    // Jump Physics
     let jumpHeight = dist(this.blu.x, this.blu.y, this.blu.targetX, this.blu.targetY);
-    let bounce = min(jumpHeight * 0.5, 50);
+    let bounce = min(jumpHeight * 0.4, 60);
     translate(0, -bounce);
 
-    // Reverse/Dizzy Animation
     if (this.isReverse) {
       rotate(sin(frameCount * 0.2) * 0.5);
-      fill(PALETTE.pink); ellipse(20, -20, 8, 8); ellipse(-20, 10, 5, 5);
+      fill(PALETTE?.pink || "#FFB7B2"); 
+      ellipse(20, -20, 8, 8); ellipse(-20, 10, 5, 5);
     }
 
-    // Body
-    if (this.isReverse) fill(PALETTE.purple);
-    else fill(50, 100, 255);
+    fill(this.isReverse ? (PALETTE?.purple || "#C3B1E1") : color(50, 100, 255));
     ellipse(0, 0, this.blu.size, this.blu.size);
 
-    // Eyes
     fill(255); ellipse(-8, -5, 12, 12); ellipse(8, -5, 12, 12);
     fill(0);
     if (this.isReverse) {
@@ -399,10 +433,9 @@ class JellyJams extends Game {
       ellipse(-8, -5, 5, 5); ellipse(8, -5, 5, 5);
     }
 
-    // Mouth
     noFill(); stroke(0); strokeWeight(2);
-    if (this.isReverse) ellipse(0, 5, 10, 10);
-    else arc(0, 5, 10, 5, 0, PI);
+    if (this.isReverse) ellipse(0, 5, 10, 10); 
+    else arc(0, 5, 10, 5, 0, PI); 
 
     pop();
   }

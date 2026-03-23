@@ -10,15 +10,16 @@ class SummaryCard {
     this.gameKey      = gameKey;      // "kaleido" | "jelly" | "tiptoe"
     this.sessionScore = sessionScore;
 
-    // Slide animation: cardOffsetY starts far below and lerps to 0.
-    // translate(0, cardOffsetY) shifts the whole card.
-    this.cardOffsetY  = height + 500;
-    this.targetOffset = 0;
+    // Slide animation state (fixed-duration easing).
+    this.animProgress = 0;
+    this.animFrames   = 24;
+    this.startOffsetY = max(height * 0.9, 520);
     this.animComplete = false;
 
     // Card dimensions
     this.CARD_W = 500;
     this.CARD_H = 450;
+    this._lastMetrics = null;
 
     // Map game keys to display names
     this._NAMES = {
@@ -41,7 +42,7 @@ class SummaryCard {
       error: err,
       gameKey: this.gameKey,
       sessionScore: this.sessionScore,
-      cardOffsetY: this.cardOffsetY,
+      offsetY: this._getOffsetY(),
       ...extra,
     });
   }
@@ -68,13 +69,54 @@ class SummaryCard {
     text("SummaryCard fallback active", cx, cy + 36);
   }
 
+  _easeOutCubic(t) {
+    const p = constrain(t, 0, 1);
+    return 1 - pow(1 - p, 3);
+  }
+
+  _getOffsetY() {
+    const eased = this._easeOutCubic(this.animProgress);
+    return (1 - eased) * this.startOffsetY;
+  }
+
+  _getMetrics() {
+    const cardW = constrain(width * 0.84, 320, this.CARD_W);
+    const cardH = constrain(height * 0.78, 340, this.CARD_H);
+    const statGap = cardH * 0.12;
+    const btnW = constrain(cardW * 0.36, 130, 190);
+    const btnH = constrain(cardH * 0.11, 38, 48);
+    const btnGapX = cardW * 0.24;
+
+    return {
+      cardW,
+      cardH,
+      titleY: -cardH * 0.41,
+      gameY: -cardH * 0.34,
+      dividerTopY: -cardH * 0.30,
+      row1Y: -cardH * 0.22,
+      row2Y: -cardH * 0.22 + statGap,
+      row3Y: -cardH * 0.22 + statGap * 2,
+      dividerBottomY: -cardH * 0.01,
+      badgeY: cardH * 0.18,
+      btnY: cardH * 0.37,
+      btn1X: -btnGapX,
+      btn2X: btnGapX,
+      btnW,
+      btnH,
+      lineHalf: cardW * 0.41,
+      statsLeftX: -cardW * 0.40,
+      statsRightX: cardW * 0.40,
+      badgeW: constrain(cardW * 0.50, 180, 250),
+      badgeH: constrain(cardH * 0.10, 36, 46),
+    };
+  }
+
   // ------------------------------------------
   // Update the slide animation each frame
   // ------------------------------------------
   update() {
-    this.cardOffsetY = lerp(this.cardOffsetY, this.targetOffset, 0.10);
-    if (abs(this.cardOffsetY - this.targetOffset) < 0.5) {
-      this.cardOffsetY  = this.targetOffset;
+    this.animProgress = min(1, this.animProgress + 1 / this.animFrames);
+    if (this.animProgress >= 1) {
       this.animComplete = true;
     }
   }
@@ -99,96 +141,95 @@ class SummaryCard {
 
       const cx = width / 2;
       const cy = height / 2;
+      const metrics = this._getMetrics();
+      this._lastMetrics = metrics;
+      const offsetY = this._getOffsetY();
 
       // --- Apply slide transform ---
       push();
       try {
-        translate(0, this.cardOffsetY);
+        translate(cx, cy + offsetY);
 
-        drawingContext.shadowBlur = 50;
+        drawingContext.shadowBlur = 24;
         drawingContext.shadowColor = "rgba(0,0,0,0.22)";
         fill(255);
         noStroke();
         rectMode(CENTER);
-        rect(cx, cy, this.CARD_W, this.CARD_H, 28);
+        rect(0, 0, metrics.cardW, metrics.cardH, 28);
         rectMode(CORNER);
         drawingContext.shadowBlur = 0;
 
         textAlign(CENTER, CENTER);
         fill(PALETTE.purple);
-        textSize(30);
         textStyle(BOLD);
-        text("Session Complete! \uD83C\uDF89", cx, cy - 188);
+        textSize(constrain(metrics.cardW * 0.06, 22, 30));
+        text("Session Complete!", 0, metrics.titleY);
 
         fill(130);
-        textSize(17);
         textStyle(NORMAL);
-        text(this._NAMES[this.gameKey] || "Game Over", cx, cy - 155);
+        textSize(constrain(metrics.cardW * 0.034, 14, 17));
+        text(this._NAMES[this.gameKey] || "Game Over", 0, metrics.gameY);
 
         stroke(220);
         strokeWeight(1);
-        line(cx - 205, cy - 134, cx + 205, cy - 134);
+        line(-metrics.lineHalf, metrics.dividerTopY, metrics.lineHalf, metrics.dividerTopY);
         noStroke();
 
-        const row1 = cy - 100;
-        this._statRow(cx, row1, "\u2B50 Stars Earned", "+" + this.sessionScore, "#E6A817");
+        this._statRow(0, metrics.row1Y, "Stars Earned", "+" + this.sessionScore, "#E6A817", metrics);
 
         const recordKey = this.gameKey + "Record";
         const record = starBank[recordKey] || 0;
         const isNewRecord = record > 0 && this.sessionScore >= record;
         this._statRow(
-          cx,
-          row1 + 54,
-          "\uD83C\uDFC6 Best Score",
-          isNewRecord ? record + "  \u2605 NEW!" : String(record),
-          isNewRecord ? "#2E7D32" : "#999"
+          0,
+          metrics.row2Y,
+          "Best Score",
+          isNewRecord ? record + "  NEW!" : String(record),
+          isNewRecord ? "#2E7D32" : "#999",
+          metrics
         );
 
-        this._statRow(cx, row1 + 108, "\uD83D\uDCAB Grand Total", starBank.totalStars + " stars", PALETTE.purple);
+        this._statRow(0, metrics.row3Y, "Grand Total", starBank.totalStars + " stars", PALETTE.purple, metrics);
 
         stroke(220);
         strokeWeight(1);
-        line(cx - 205, cy + 42, cx + 205, cy + 42);
+        line(-metrics.lineHalf, metrics.dividerBottomY, metrics.lineHalf, metrics.dividerBottomY);
         noStroke();
 
-        const badgeY = cy + 82;
+        const badgeY = metrics.badgeY;
         fill(starBank.getLevelBadgeColor());
-        noStroke();
         rectMode(CENTER);
-        rect(cx, badgeY, 250, 46, 23);
+        rect(0, badgeY, metrics.badgeW, metrics.badgeH, 23);
         rectMode(CORNER);
         fill(60);
-        textSize(18);
         textStyle(BOLD);
-        textAlign(CENTER, CENTER);
-        text(starBank.getLevel(), cx, badgeY);
+        textSize(constrain(metrics.cardW * 0.036, 14, 18));
+        text(starBank.getLevel(), 0, badgeY);
 
-        const btnY = cy + 168;
-        const btn1X = cx - 118;
-        const btn2X = cx + 118;
-        const h1 = this._isHover(btn1X, btnY, 190, 48);
-        const h2 = this._isHover(btn2X, btnY, 190, 48);
+        const btnY = metrics.btnY;
+        const btn1X = metrics.btn1X;
+        const btn2X = metrics.btn2X;
+        const h1 = this._isHover(btn1X, btnY, metrics.btnW, metrics.btnH, offsetY);
+        const h2 = this._isHover(btn2X, btnY, metrics.btnW, metrics.btnH, offsetY);
 
         fill(h1 ? "#2A3B75" : "#3E5296");
         noStroke();
         rectMode(CENTER);
-        rect(btn1X, btnY, 190, 48, 24);
+        rect(btn1X, btnY, metrics.btnW, metrics.btnH, metrics.btnH / 2);
         rectMode(CORNER);
         fill(255);
-        textSize(16);
+        textSize(constrain(metrics.cardW * 0.032, 12, 16));
         textStyle(BOLD);
-        textAlign(CENTER, CENTER);
         text("PLAY AGAIN", btn1X, btnY);
 
         fill(h2 ? "#555" : "#9E9E9E");
         noStroke();
         rectMode(CENTER);
-        rect(btn2X, btnY, 190, 48, 24);
+        rect(btn2X, btnY, metrics.btnW, metrics.btnH, metrics.btnH / 2);
         rectMode(CORNER);
         fill(255);
-        textSize(16);
+        textSize(constrain(metrics.cardW * 0.032, 12, 16));
         textStyle(BOLD);
-        textAlign(CENTER, CENTER);
         text("MAIN MENU", btn2X, btnY);
 
         if (h1 || h2) cursor(HAND);
@@ -216,40 +257,43 @@ class SummaryCard {
   // Click detection (compensates for translate)
   // ------------------------------------------
   isPlayAgainClicked() {
-    const btnY  = height / 2 + 168 + this.cardOffsetY;
-    const btn1X = width  / 2 - 118;
-    return this._hitTest(btn1X, btnY, 190, 48);
+    const m = this._lastMetrics || this._getMetrics();
+    const btnY = height / 2 + m.btnY + this._getOffsetY();
+    const btn1X = width / 2 + m.btn1X;
+    return this._hitTest(btn1X, btnY, m.btnW, m.btnH);
   }
 
   isMenuClicked() {
-    const btnY  = height / 2 + 168 + this.cardOffsetY;
-    const btn2X = width  / 2 + 118;
-    return this._hitTest(btn2X, btnY, 190, 48);
+    const m = this._lastMetrics || this._getMetrics();
+    const btnY = height / 2 + m.btnY + this._getOffsetY();
+    const btn2X = width / 2 + m.btn2X;
+    return this._hitTest(btn2X, btnY, m.btnW, m.btnH);
   }
 
   // ------------------------------------------
   // Helpers
   // ------------------------------------------
-  _statRow(cx, y, label, value, valueColor) {
+  _statRow(cx, y, label, value, valueColor, metrics) {
     noStroke();
     fill(100);
-    textSize(16);
+    textSize(constrain(metrics.cardW * 0.032, 12, 16));
     textStyle(NORMAL);
     textAlign(LEFT, CENTER);
-    text(label, cx - 200, y);
+    text(label, cx + metrics.statsLeftX, y);
 
     fill(valueColor || PALETTE.text || "#5D5D5D");
-    textSize(16);
+    textSize(constrain(metrics.cardW * 0.032, 12, 16));
     textStyle(BOLD);
     textAlign(RIGHT, CENTER);
-    text(value, cx + 200, y);
+    text(value, cx + metrics.statsRightX, y);
   }
 
-  // Hover check accounts for the live cardOffsetY shift
-  _isHover(btnX, localBtnY, w, h) {
-    const screenY = localBtnY + this.cardOffsetY;
+  // Hover check accounts for the live animated offset
+  _isHover(localBtnX, localBtnY, w, h, offsetY) {
+    const screenX = width / 2 + localBtnX;
+    const screenY = height / 2 + localBtnY + offsetY;
     return (
-      mouseX > btnX - w / 2 && mouseX < btnX + w / 2 &&
+      mouseX > screenX - w / 2 && mouseX < screenX + w / 2 &&
       mouseY > screenY - h / 2 && mouseY < screenY + h / 2
     );
   }
@@ -262,3 +306,4 @@ class SummaryCard {
     );
   }
 }
+
