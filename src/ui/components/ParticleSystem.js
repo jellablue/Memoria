@@ -83,13 +83,18 @@ class ParticleSystem {
   }
 
   draw() {
-    // Vertical gradient background
-    noFill();
-    for (let y = 0; y < height; y++) {
-      let inter = map(y, 0, height, 0, 1);
-      let c = lerpColor(this.colorTop, this.colorBottom, inter);
-      stroke(c);
-      line(0, y, width, y);
+    // Background image
+    if (typeof bgImage !== 'undefined' && bgImage) {
+      image(bgImage, 0, 0, width, height);
+    } else {
+      // Fallback gradient
+      noFill();
+      for (let y = 0; y < height; y++) {
+        let inter = map(y, 0, height, 0, 1);
+        let c = lerpColor(this.colorTop, this.colorBottom, inter);
+        stroke(c);
+        line(0, y, width, y);
+      }
     }
 
     // Draw particles
@@ -97,7 +102,7 @@ class ParticleSystem {
     for (let s of this.sparkles) s.draw();
 
     // Foreground flora
-    this.drawForegroundFlora();
+    //this.drawForegroundFlora();
   }
 
   drawForegroundFlora() {
@@ -109,5 +114,34 @@ class ParticleSystem {
     fill(180, 240, 220, 150);
     ellipse(50, height, 200, 150);
     ellipse(width - 50, height, 250, 180);
+  }
+}
+
+class Particle {
+  constructor(x, y, col) {
+    this.x = x + random(-40, 40);
+    this.y = y + random(-80, 40);
+    this.size = random(3, 6);
+    this.alpha = 255;
+    this.col = col;
+    this.vx = random(-0.5, 0.5);
+    this.vy = random(-1.5, -0.5);
+  }
+
+  update() {
+    this.x += this.vx;
+    this.y += this.vy;
+    this.alpha -= 4;
+  }
+
+  display() {
+    noStroke();
+    fill(red(this.col), green(this.col), blue(this.col), this.alpha);
+    ellipse(this.x, this.y, this.size);
+   // rect(this.x, this.y, this.size, this.size, 1);
+  }
+
+  isDead() {
+    return this.alpha <= 0;
   }
 }

@@ -6,32 +6,41 @@ class KaleidoPop extends Game {
     this.totalScore = 0;
 
     this.palette = ["#B5CDF5", "#A0EACD", "#F6C0D9", "#FFFFE0", "#FFD580"];
+    this.extraColorPool = [
+      "#FFA07A", "#DDA0DD", "#F0E68C", "#98FB98", "#FF6961",
+      "#87CEEB", "#FFB347", "#B0E0E6", "#F4A7B9", "#C3B1E1"
+    ];
     this.petals = [];
     this.selectedBrushColor = this.palette[0];
     this.currentRotation = 0;
     this.rotationSpeed = this.difficultyParams.petalSpeed || 0.002;
+    
+    // Progression tracking
+    this.showMilestoneOverlay = false;
+    this.milestoneMessage = "";
+    this.rotationSpeedMultiplier = 1;
 
     this.generateMandala();
   }
 
+  getRotationStartLevel() {
+    // Check if user is in JUNIOR age group
+    if (gameState.userAge <= 12) {
+      return 10; // JUNIOR: rotation starts at level 10
+    } else {
+      return 6; // ADULT and SENIOR: rotation starts at level 6
+    }
+  }
+
   generateMandala() {
     let minP = this.difficultyParams.minPetals || 6;
-    let maxP = this.difficultyParams.maxPetals || 12;
 
-    let numPetals = floor(random(minP, maxP + 1));
-    if (this.level <= 2) {
-      numPetals = minP;
-    } else if (this.level <= 5) {
-      numPetals = minP + floor((maxP - minP) * 0.33);
-    } else if (this.level <= 8) {
-      numPetals = minP + floor((maxP - minP) * 0.66);
-    } else {
-      numPetals = maxP;
-    }
+    // Exactly +1 petal every 5 levels
+    let numPetals = minP + floor((this.level - 1) / 5);
     let angleStep = TWO_PI / numPetals;
 
-    let petalRadius = 150 - this.level * 3; 
-    petalRadius = max(petalRadius, 80);
+    let petalRadius = 225 - this.level * 4.5; 
+    petalRadius = max(petalRadius, 120);
 
     let colorBag = [];
 
@@ -82,27 +91,52 @@ class KaleidoPop extends Game {
     this.level++;
     this.gameState = "MEMORIZE";
 
-    if (this.level <= 3) this.timer = 5 * 60; 
-    else if (this.level <= 6) this.timer = 4 * 60; 
-    else if (this.level <= 10) this.timer = 3 * 60; 
-    else this.timer = 2 * 60; 
+    // Timer: base 3s + 2 extra seconds per 5-level milestone
+    let baseMemoSeconds = 3;
+    let timeBonus = floor((this.level - 1) / 5) * 2;
+    this.timer = (baseMemoSeconds + timeBonus) * 60;
     
     this.petals = [];
     this.currentRotation = 0;
-    if (this.level > 5) {
-      this.rotationSpeed = 0.002 + (this.level - 5) * 0.0005; 
+    
+    // Check for milestone every 5 levels
+    if (this.level % 5 === 1 && this.level > 1) {
+      this.showMilestoneOverlay = true;
+      this.milestoneMessage = "You are great at memorizing, let's add more petals!!";
     }
-    if (this.level === 5 && this.palette.length === 5) this.palette.push("#FFA07A"); 
-    if (this.level === 10 && this.palette.length === 6) this.palette.push("#DDA0DD"); 
+    
+    // Rotation speed: increases by 20% of current speed every 5 levels from rotationStartLevel
+    let rotationStartLevel = this.getRotationStartLevel();
+    if (this.level >= rotationStartLevel) {
+      let speedIncreaseCount = floor((this.level - rotationStartLevel) / 5);
+      this.rotationSpeedMultiplier = pow(1.2, speedIncreaseCount);
+      this.rotationSpeed = (this.difficultyParams.petalSpeed || 0.002) * this.rotationSpeedMultiplier;
+    }
+    
+    // Add 1 new color every 5 levels after level 10 (levels 11, 16, 21, 26, ...)
+    if (this.level > 10) {
+      let extraColorsNeeded = floor((this.level - 11) / 5) + 1;
+      let targetPaletteSize = 5 + extraColorsNeeded;
+      while (this.palette.length < targetPaletteSize && this.palette.length - 5 < this.extraColorPool.length) {
+        this.palette.push(this.extraColorPool[this.palette.length - 5]);
+      }
+    }
     
     this.generateMandala();
   }
 
   draw() {
+    // Show milestone overlay
+    if (this.showMilestoneOverlay) {
+      this.drawMilestoneOverlay();
+      return;
+    }
+
     push();
     translate(width / 2, height / 2);
 
-    if (this.gameState === "INPUT" && this.level > 5) {
+    let rotationStartLevel = this.getRotationStartLevel();
+    if (this.gameState === "INPUT" && this.level >= rotationStartLevel) {
       this.currentRotation += this.rotationSpeed;
     }
 
@@ -123,7 +157,7 @@ class KaleidoPop extends Game {
       }
       strokeWeight(3);
       if (this.gameState !== "RESULT") stroke("#3E5296");
-      this.drawPetalShape(0, 0, p.radius, 60);
+      this.drawPetalShape(0, 0, p.radius, 90);
       pop();
     }
 
@@ -132,6 +166,59 @@ class KaleidoPop extends Game {
     pop();
 
     this.handleUI();
+  }
+
+  drawMilestoneOverlay() {
+    // Dim background
+    fill(0, 150);
+    rect(0, 0, width, height);
+
+    // Card
+    let cardW = 500;
+    let cardH = 300;
+    let cardX = width / 2 - cardW / 2;
+    let cardY = height / 2 - cardH / 2;
+
+    drawingContext.shadowBlur = 30;
+    drawingContext.shadowColor = "rgba(0,0,0,0.3)";
+    fill(255);
+    rect(cardX, cardY, cardW, cardH, 20);
+    drawingContext.shadowBlur = 0;
+
+    // Message
+    fill(PALETTE.purple);
+    textSize(28);
+    textStyle(BOLD);
+    textAlign(CENTER, CENTER);
+    text(this.milestoneMessage, width / 2, height / 2 - 60);
+
+    // Stats
+    fill(50);
+    textSize(20);
+    textStyle(NORMAL);
+    text("Level: " + this.level, width / 2, height / 2);
+    text("Score: " + this.totalScore, width / 2, height / 2 + 40);
+
+    // Continue Button
+    let btnW = 200;
+    let btnH = 50;
+    let btnX = width / 2 - btnW / 2;
+    let btnY = height / 2 + 120;
+
+    if (dist(mouseX, mouseY, width / 2, btnY + btnH / 2) < btnW / 2) {
+      fill(PALETTE.green);
+      cursor(HAND);
+    } else {
+      fill(PALETTE.blue);
+      cursor(ARROW);
+    }
+
+    rect(btnX, btnY, btnW, btnH, 10);
+    fill(255);
+    textSize(18);
+    textStyle(BOLD);
+    textAlign(CENTER, CENTER);
+    text("CONTINUE", width / 2, btnY + btnH / 2 + 2);
   }
 
   drawPetalShape(x, y, len, wid) {
@@ -144,6 +231,18 @@ class KaleidoPop extends Game {
 
   // --- FIXED CHECK CLICK ---
   checkClick() {
+    // Case 0: Handle milestone overlay
+    if (this.showMilestoneOverlay) {
+      let btnW = 200;
+      let btnH = 50;
+      let btnX = width / 2 - btnW / 2;
+      let btnY = height / 2 + 120;
+      if (mouseX > btnX && mouseX < btnX + btnW && mouseY > btnY && mouseY < btnY + btnH) {
+        this.showMilestoneOverlay = false;
+      }
+      return;
+    }
+
     // Case 1: Handle Result/GameOver Buttons
     if (this.gameState === "RESULT" || this.gameState === "GAMEOVER") {
       this.checkPopupClick();
@@ -337,14 +436,21 @@ class KaleidoPop extends Game {
   restartGame() {
     this.gameState = "MEMORIZE";
     this.level = 1;
-    this.timer = 5 * 60;
+    this.timer = 3 * 60; // Base: 3 seconds at level 1
     this.totalScore = 0;
     this.lives = 3;
     this.palette = ["#B5CDF5", "#A0EACD", "#F6C0D9", "#FFFFE0", "#FFD580"];
+    this.extraColorPool = [
+      "#FFA07A", "#DDA0DD", "#F0E68C", "#98FB98", "#FF6961",
+      "#87CEEB", "#FFB347", "#B0E0E6", "#F4A7B9", "#C3B1E1"
+    ];
     this.petals = [];
     this.selectedBrushColor = this.palette[0];
     this.currentRotation = 0;
     this.rotationSpeed = this.difficultyParams.petalSpeed || 0.002;
+    this.showMilestoneOverlay = false;
+    this.milestoneMessage = "";
+    this.rotationSpeedMultiplier = 1;
     this.generateMandala();
   }
 }

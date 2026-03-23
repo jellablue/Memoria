@@ -1,7 +1,3 @@
-// ============================================
-// MENU BUTTON COMPONENT
-// ============================================
-
 class MenuButton {
   constructor(x, y, w, h, label, col, action) {
     this.x = x - w / 2;
@@ -11,16 +7,28 @@ class MenuButton {
     this.label = label;
     this.col = col;
     this.action = action;
+    this.particles = [];
   }
 
   display() {
     let hover = this.isHovering();
+    let pulse = sin(frameCount * 0.05) * 10;
+    push();
 
     if (hover) {
-      fill(255, 210);
+      if (frameCount % 5 === 0) {
+        this.particles.push(new Particle(this.x, this.y, this.col));
+      }
+      
+      fill(255, 220);
       cursor(HAND);
-      drawingContext.shadowBlur = 25;
-      drawingContext.shadowColor = this.col;
+      drawingContext.shadowBlur = hover ? 60 + pulse : 15;
+      drawingContext.shadowColor = color(
+        red(this.col),
+        green(this.col),
+        blue(this.col),
+        150, // transparency
+      );
     } else {
       fill(255, 120);
       cursor(ARROW);
@@ -48,6 +56,23 @@ class MenuButton {
     text(this.label, this.x + this.w / 2, this.y + this.h / 2);
 
     drawingContext.shadowBlur = 0;
+
+    if (hover) {
+      drawingContext.shadowBlur = 25;
+      drawingContext.shadowColor = this.col;
+    } else {
+      drawingContext.shadowBlur = 5;
+    }
+
+    for (let i = this.particles.length - 1; i >= 0; i--) {
+      let p = this.particles[i];
+      p.update();
+      p.display();
+
+      if (p.isDead()) {
+        this.particles.splice(i, 1);
+      }
+    }
   }
 
   isHovering() {
