@@ -1,7 +1,3 @@
-// ============================================
-// WELCOME SCREEN
-// ============================================
-
 class WelcomeScreen {
   constructor() {
     this.startBtnHover = false;
@@ -11,22 +7,21 @@ class WelcomeScreen {
     drawingContext.shadowBlur = 15;
     drawingContext.shadowColor = "white";
     fill(255);
-    textSize(40);
+    textSize(70);
     textStyle(BOLD);
     textAlign(CENTER, CENTER);
     text("Welcome to Memoria!", width / 2, height / 3 - 40);
     drawingContext.shadowBlur = 0;
 
     fill(PALETTE.text);
-    textSize(28);
+    textSize(40);
     textStyle(NORMAL);
-    text("Blu's Wonderland", width / 2, height / 3 + 10);
+    text("Blu's Wonderland", width / 2, height / 3 + 30);
 
     // Floating Blu
     let floatY = sin(frameCount * 0.05) * 10;
     push();
     translate(width / 2, height / 2 - 20 + floatY);
-
     noStroke();
     fill(50, 100, 255);
     ellipse(0, 0, 80, 80);

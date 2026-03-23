@@ -1,5 +1,12 @@
+// Cloud images for transition animation
+let cloudImgs = [];
+
 function preload() {
   audioManager.preload();
+  bgImage = loadImage('assets/BackgroundImage.jpg');
+  for (let i = 1; i <= 4; i++) {
+    cloudImgs.push(loadImage(`assets/cloud${i}.png`));
+  }
 }
 
 function setup() {

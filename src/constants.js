@@ -1,7 +1,3 @@
-// ============================================
-// GAME CONSTANTS & CONFIGURATION
-// ============================================
-
 const PALETTE = {
   pink: "#FFD1DC",
   green: "#C1E1C1",
@@ -52,7 +48,7 @@ const DIFFICULTY_CONFIG = {
     jellyTwistChance: 0.2,
     petalSpeed: 0.002,
     minPetals: 5,
-    maxPetals: 7,
+    maxPetals: 8,
     tiptoeGrid: 3,
     tiptoeSpeed: 60,
   },
@@ -90,4 +86,4 @@ const GAME_STATES = {
   RESULTS: "RESULTS",
 };
 
-const IDLE_TIME_LIMIT = 30000; // 30 seconds
+const IDLE_TIME_LIMIT = 300000; // 30 seconds
