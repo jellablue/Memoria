@@ -8,6 +8,7 @@ class WelcomeScreen {
     this.scrollOffset = 0;
     this.targetScroll = 0;
     this.maxScroll = 0;
+    this.settingsBtnScale = 1.0;
 
     this._syncLayout();
   }
@@ -64,6 +65,44 @@ class WelcomeScreen {
     pop();
 
     this.drawScrollbar();
+    this.drawSettingsButton();
+  }
+   _settingsBtnBounds() {
+    const size = 48;
+    return {
+      x: width - max(40, width * 0.05) - size / 2,
+      y: max(40, height * 0.06) - size / 2,
+      w: size,
+      h: size,
+    };
+  }
+
+  drawSettingsButton() {
+    const b = this._settingsBtnBounds();
+    const cx = b.x + b.w / 2;
+    const cy = b.y + b.h / 2;
+    const hover = mouseX > b.x && mouseX < b.x + b.w && mouseY > b.y && mouseY < b.y + b.h;
+
+    this.settingsBtnScale = lerp(this.settingsBtnScale, hover ? 1.12 : 1.0, 0.2);
+
+    push();
+    translate(cx, cy);
+    scale(this.settingsBtnScale);
+    drawingContext.shadowBlur = hover ? 15 : 5;
+    drawingContext.shadowColor = 'rgba(0,0,0,0.15)';
+    noStroke();
+    fill(255);
+    circle(0, 0, 48);
+    drawingContext.shadowBlur = 0;
+
+    fill(hover ? (PALETTE?.purple || '#9B5DE5') : 110);
+    textAlign(CENTER, CENTER);
+    textSize(20);
+    textStyle(BOLD);
+    text('⚙', 0, 1);
+    pop();
+
+    if (hover) cursor(HAND);
   }
 
   drawHeroSection() {
@@ -261,6 +300,13 @@ class WelcomeScreen {
     let btnY = this.layout.btnY;
     let virtualMouseY = mouseY + this.scrollOffset;
 
+    const s = this._settingsBtnBounds();
+    if (mouseX > s.x && mouseX < s.x + s.w && mouseY > s.y && mouseY < s.y + s.h) {
+      if (typeof audioManager !== 'undefined') audioManager.playSound("petal");
+      gameState.setScreen(GAME_STATES.SETTINGS);
+      return true;
+    }
+
     if (
       mouseX > btnX &&
       mouseX < btnX + btnW &&
@@ -276,5 +322,7 @@ class WelcomeScreen {
       return true;
     }
     return false;
+    
   }
+  
 }

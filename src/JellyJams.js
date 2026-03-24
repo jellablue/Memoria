@@ -241,6 +241,9 @@ class JellyJams extends Game {
             this.playerStep++;
             if (this.playerStep >= this.sequence.length) {
               this.score += (this.sequence.length * 10);
+              if (typeof starBank !== "undefined" && starBank.recordLevelComplete) {
+                starBank.recordLevelComplete(this.lives === 3);
+              }
               this.gameState = "RESULT";
             }
           } else {

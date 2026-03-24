@@ -5,6 +5,7 @@ class UIManager {
       welcome: new WelcomeScreen(),
       ageSelect: new AgeSelectionScreen(),
       menu: new MenuScreen(),
+      settings: new SettingsScreen(),
       gameA: new GameScreen(GAME_STATES.GAME_A),
       gameB: new GameScreen(GAME_STATES.GAME_B),
       gameC: new GameScreen(GAME_STATES.GAME_C),
@@ -30,6 +31,7 @@ class UIManager {
   startTransition(targetScreen) {
     if (this._transitioning) return;
     this._transitioning = true;
+    audioManager.playSound("cloud");
 
     this.cloudTransition = new CloudTransition(() => {
       gameState.setScreen(targetScreen);
@@ -109,6 +111,8 @@ class UIManager {
       this.currentScreen = this.screens.ageSelect;
     } else if (screen === GAME_STATES.MENU) {
       this.currentScreen = this.screens.menu;
+    } else if (screen === GAME_STATES.SETTINGS) {
+      this.currentScreen = this.screens.settings;
     } else if (screen === GAME_STATES.GAME_A) {
       if (this.screens.gameA.prepareForEntry) this.screens.gameA.prepareForEntry();
       this.currentScreen = this.screens.gameA;
@@ -141,6 +145,12 @@ class UIManager {
 
     if (this.currentScreen && this.currentScreen.handleScroll) {
       this.currentScreen.handleScroll(delta);
+    }
+  }
+
+  handleMouseRelease() {
+    if (this.currentScreen && this.currentScreen.handleMouseRelease) {
+      this.currentScreen.handleMouseRelease();
     }
   }
 }

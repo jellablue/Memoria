@@ -31,6 +31,10 @@ class GameScreen {
     if (!this.game) this._createGameInstance();
     if (!this.game) return;
 
+    if (typeof starBank !== 'undefined' && starBank.resetSession) {
+      starBank.resetSession();
+    }
+
     if (this.gameType === "GAME_A" && this.game.restartGame) this.game.restartGame();
     else if (this.gameType === "GAME_B" && this.game.startGame) this.game.startGame();
     else if (this.gameType === "GAME_C" && this.game.restartGame) this.game.restartGame();
@@ -61,16 +65,29 @@ class GameScreen {
     return (this.game.totalScore !== undefined) ? this.game.totalScore : (this.game.score || 0);
   }
 
+  _getSessionMaxLevel() {
+    if (!this.game || this.game.level === undefined) return 1;
+    return this.game.level;
+  }
+
+  _getSessionLivesLost() {
+    if (!this.game || this.game.lives === undefined) return 0;
+    return Math.max(0, 3 - this.game.lives);
+  }
+
   _checkAndCreateSummaryCard() {
     if (this.game && this.game.gameState === "GAMEOVER" && !this.summaryCard && !this._scoreReported) {
       const sessionScore = this._getSessionScore();
+      const maxLevel     = this._getSessionMaxLevel();
+      const livesLost    = this._getSessionLivesLost();
       const gameKey      = this._getGameKey();
       try {
-        this.summaryCard = new SummaryCard(gameKey, sessionScore);
+        let starsEarned = sessionScore;
         if (typeof starBank !== 'undefined') {
-          starBank.addStars(sessionScore);
+          starsEarned = starBank.addStarsFromSession(sessionScore, maxLevel, livesLost, gameKey);
           starBank.updateRecord(gameKey, sessionScore);
         }
+        this.summaryCard = new SummaryCard(gameKey, sessionScore, starsEarned);
         this._scoreReported = true;
       } catch (err) {
         console.error("[GameScreen] Failed to create SummaryCard", err);

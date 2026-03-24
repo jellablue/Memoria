@@ -243,6 +243,9 @@ class TiptoeTrails extends Game {
 
       if (this.playerPath.length === this.path.length) {
         this.score += (this.path.length * 10);
+        if (typeof starBank !== "undefined" && starBank.recordLevelComplete) {
+          starBank.recordLevelComplete(this.lives === 3);
+        }
         this.gameState = 'RESULT';
       }
     } else {

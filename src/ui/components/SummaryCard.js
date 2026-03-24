@@ -1,7 +1,8 @@
 class SummaryCard {
-  constructor(gameKey, sessionScore) {
+  constructor(gameKey, sessionScore, starsEarned) {
     this.gameKey      = gameKey;
     this.sessionScore = sessionScore;
+    this.starsEarned  = (starsEarned !== undefined) ? starsEarned : sessionScore;
 
     // --- Animation States ---
     this.animProgress = 0;
@@ -146,7 +147,7 @@ class SummaryCard {
         const isNewRecord = record > 0 && this.sessionScore >= record;
         const totalStars = (typeof starBank !== 'undefined') ? starBank.totalStars : 0;
 
-        this._statRow(0, metrics.row1Y, "⭐ Stars Earned", "+" + this.sessionScore, "#E6A817", metrics);
+        this._statRow(0, metrics.row1Y, "⭐ Stars Earned", "+" + this.starsEarned, "#E6A817", metrics);
         this._statRow(
           0, metrics.row2Y, "🏆 Best Score", 
           isNewRecord ? record + "  NEW!" : String(record),
@@ -221,13 +222,6 @@ class SummaryCard {
         pop();
       }
 
-      try {
-        if (typeof starBank !== 'undefined' && starBank.drawPopAnim) {
-           starBank.drawPopAnim();
-        }
-      } catch (err) {
-        this._logError("draw pop animation", err);
-      }
     } catch (err) {
       this._logError("draw root", err);
     } finally {

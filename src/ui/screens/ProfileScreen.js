@@ -113,7 +113,16 @@ class ProfileScreen {
 
   _drawMetricCards() {
     const { cx, summaryHeaderY, summaryCardsStartY, cardW } = this.layout;
-    const scores = (typeof starBank !== 'undefined') ? starBank.getCognitiveScores() : { visual: 0, auditory: 0, spatial: 0 };
+    const scores = (typeof starBank !== 'undefined')
+      ? starBank.getCognitiveScores()
+      : {
+          visual: 0,
+          auditory: 0,
+          spatial: 0,
+          sessionVisual: 0,
+          sessionAuditory: 0,
+          sessionSpatial: 0,
+        };
 
     push();
     fill(150);
@@ -130,9 +139,33 @@ class ProfileScreen {
     pop();
 
     const metrics = [
-      { icon: "\uD83C\uDF38", game: "Kaleido-Pop",   faculty: "Visual Binding",   color: PALETTE?.pink || "#FFB7B2", score: scores.visual },
-      { icon: "\uD83C\uDFB5", game: "Jelly Jams",    faculty: "Audio Sequencing", color: PALETTE?.blue || "#B5CDF5", score: scores.auditory },
-      { icon: "\uD83D\uDC63", game: "Tiptoe Trails", faculty: "Spatial Mapping",  color: PALETTE?.green || "#A0EACD", score: scores.spatial },
+      {
+        icon: "\uD83C\uDF38",
+        game: "Kaleido-Pop",
+        gameKey: "kaleido",
+        faculty: "Visual Binding",
+        color: PALETTE?.pink || "#FFB7B2",
+        score: scores.visual,
+        sessionScore: scores.sessionVisual,
+      },
+      {
+        icon: "\uD83C\uDFB5",
+        game: "Jelly Jams",
+        gameKey: "jelly",
+        faculty: "Audio Sequencing",
+        color: PALETTE?.blue || "#B5CDF5",
+        score: scores.auditory,
+        sessionScore: scores.sessionAuditory,
+      },
+      {
+        icon: "\uD83D\uDC63",
+        game: "Tiptoe Trails",
+        gameKey: "tiptoe",
+        faculty: "Spatial Mapping",
+        color: PALETTE?.green || "#A0EACD",
+        score: scores.spatial,
+        sessionScore: scores.sessionSpatial,
+      },
     ];
 
     const metricH = 80;
@@ -178,8 +211,25 @@ class ProfileScreen {
       fill(240);
       rect(barX, barY, barW, 12, 6);
 
+      const overlayColor = color(m.color);
+      fill(red(overlayColor), green(overlayColor), blue(overlayColor), 90);
+      rect(barX, barY, barW * (m.sessionScore / 100) * this.animT, 12, 6);
+
       fill(m.color);
       rect(barX, barY, barW * (m.score / 100) * this.animT, 12, 6);
+
+      const delta = (typeof starBank !== 'undefined' && starBank.getSessionDelta)
+        ? starBank.getSessionDelta(m.gameKey)
+        : null;
+      if (delta) {
+        fill(255, 240, 180);
+        rect(barX, barY - 24, 86, 18, 9);
+        fill(120, 90, 20);
+        textSize(11);
+        textStyle(BOLD);
+        textAlign(CENTER, CENTER);
+        text("PB " + delta, barX + 43, barY - 15);
+      }
 
       fill(m.color);
       textSize(22);

@@ -17,6 +17,7 @@ function setup() {
 
   gameState.recordActivity();
   console.log("Setup Complete");
+  audioManager.playBackgroundMusic();
 }
 
 function draw() {
@@ -28,9 +29,15 @@ function draw() {
 
   uiManager.updateCurrentScreen();
   uiManager.draw();
+
+  if (typeof starBank !== "undefined") {
+    if (starBank.drawPopAnim) starBank.drawPopAnim();
+    if (starBank.drawStreakAnim) starBank.drawStreakAnim();
+  }
 }
 
 function mouseClicked() {
+  userStartAudio();
   gameState.recordActivity();
   uiManager.handleClick();
   return false;
@@ -48,6 +55,13 @@ function keyPressed() {
 
 function mouseMoved() {
   gameState.recordActivity();
+}
+
+function mouseReleased() {
+  if (uiManager && uiManager.handleMouseRelease) {
+    uiManager.handleMouseRelease();
+  }
+  return false;
 }
 
 function windowResized() {
