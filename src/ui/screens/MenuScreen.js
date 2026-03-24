@@ -12,11 +12,16 @@ class MenuScreen {
   }
 
   _getStarCardMetrics() {
-    const isNarrow = width < 980;
+    // FIXED: Increased breakpoint to 1100px. 
+    // This ensures that when the buttons are dead-center, the StarBank 
+    // card won't overlap them on medium-sized screens (like tablets).
+    const isNarrow = width < 1100; 
+    
     const pad = constrain(width * 0.02, 10, 24);
-    const cardW = constrain(width * (isNarrow ? 0.8 : 0.28), 260, 340);
+    const cardW = constrain(width * (isNarrow ? 0.8 : 0.25), 260, 320); // Slightly refined max-width
     const cardH = constrain(height * 0.35, 240, 280);
 
+    // On narrow screens, it anchors to the bottom center. On wide screens, top right.
     const x = isNarrow ? (width / 2 - cardW / 2) : (width - cardW - pad);
     const y = isNarrow ? (height - cardH - pad) : pad;
 
@@ -33,7 +38,8 @@ class MenuScreen {
     const btnH = constrain(height * 0.12, 76, 96);
     const gap = constrain(height * 0.03, 16, 26);
 
-    const centerX = m.isNarrow ? width / 2 : width * 0.4;
+    // FIXED: Unconditionally set the buttons and title to the dead center of the screen
+    const centerX = width / 2;
 
     this.layout = {
       btnW,
@@ -42,7 +48,8 @@ class MenuScreen {
       centerX,
       titleY: height * 0.18,
       subtitleY: height * 0.26,
-      startY: height * 0.35,
+      // Shift buttons slightly up on mobile to avoid hitting the StarBank card
+      startY: m.isNarrow ? height * 0.32 : height * 0.36, 
       titleSize: constrain(base * 0.08, 38, 72),
       subtitleSize: constrain(base * 0.04, 20, 36),
     };
@@ -141,7 +148,7 @@ class MenuScreen {
     textStyle(BOLD);
     textSize(constrain(m.cardW * 0.1, 24, 34));
     fill("#E6A817");
-    text("Ã¢Â­Â", m.x + m.cardW * 0.08, rowY + m.cardH * 0.02);
+    text("⭐", m.x + m.cardW * 0.08, rowY + m.cardH * 0.02);
 
     textSize(constrain(m.cardW * 0.09, 20, 28));
     fill(60);
@@ -166,9 +173,9 @@ class MenuScreen {
     text(typeof starBank !== 'undefined' ? starBank.getLevel() : "Level 1", badgeX + badgeW / 2, badgeY + m.cardH * 0.01);
 
     const records = [
-      { label: "Ã°Å¸Å’Â¸ Kaleido", val: typeof starBank !== 'undefined' ? starBank.kaleidoRecord : 0 },
-      { label: "Ã°Å¸Å½Âµ Jelly",   val: typeof starBank !== 'undefined' ? starBank.jellyRecord : 0 },
-      { label: "Ã°Å¸â€˜Â£ Tiptoe",  val: typeof starBank !== 'undefined' ? starBank.tiptoeRecord : 0 },
+      { label: "🌸 Kaleido", val: typeof starBank !== 'undefined' ? starBank.kaleidoRecord : 0 },
+      { label: "🎵 Jelly",   val: typeof starBank !== 'undefined' ? starBank.jellyRecord : 0 },
+      { label: "👣 Tiptoe",  val: typeof starBank !== 'undefined' ? starBank.tiptoeRecord : 0 },
     ];
 
     const recStartY = badgeY + m.cardH * 0.15;

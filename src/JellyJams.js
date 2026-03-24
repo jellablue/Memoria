@@ -91,22 +91,24 @@ class JellyJams extends Game {
     this._syncLayout();
     this.handleLogic();
     this.updateBlu();
-
-    this.drawVisuals();
-    this.drawBlu();
-
-    if (this.flashTimer > 0) {
-      push();
-      fill(211, 47, 47, this.flashTimer * 10);
-      noStroke();
-      rectMode(CORNER);
-      rect(0, 0, width, height);
-      this.flashTimer--;
-      pop();
+    
+    push(); 
+    if (this.shakeTimer > 0) {
+      let shakeX = random(-6, 6);
+      let shakeY = random(-6, 6);
+      translate(shakeX, shakeY); 
+      
+      this.shakeTimer--; 
     }
 
-    this.handleUI();
-  }
+    this.drawVisuals(); 
+    this.drawBlu();
+    
+    pop(); 
+    
+    this.handleUI();  
+
+   }
 
   handleLogic() {
     for (let j of this.jellies) {
@@ -243,7 +245,7 @@ class JellyJams extends Game {
             }
           } else {
             this.lives--;
-            this.flashTimer = 15;
+            this.shakeTimer = 15;
 
             if (this.lives <= 0) {
                 this.gameState = "GAMEOVER";
@@ -276,7 +278,7 @@ class JellyJams extends Game {
        if (this.isReverse) {
          fill("#D32F2F");
          textSize(24); textStyle(BOLD);
-         text("Ã¢â€ Âº REWIND! Input Backwards! Ã¢â€ Âº", width / 2, topY);
+         text("↺ REWIND! Input Backwards! ↺", width / 2, topY);
        } else {
          fill(PALETTE?.green || "#5DC98A");
          textSize(24); textStyle(BOLD);
@@ -295,7 +297,7 @@ class JellyJams extends Game {
     textSize(14); textStyle(BOLD);
     text("LIVES", hudX + 20, hudY + 20);
     textSize(20);
-    text("Ã¢ÂÂ¤Ã¯Â¸Â".repeat(this.lives), hudX + 20, hudY + 40);
+    text("❤️".repeat(this.lives), hudX + 20, hudY + 40);
 
     textSize(14); textStyle(BOLD); fill(80);
     text("LEVEL", hudX + 20, hudY + 80);

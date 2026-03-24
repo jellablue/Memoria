@@ -1,16 +1,20 @@
-
 class SummaryCard {
   constructor(gameKey, sessionScore) {
     this.gameKey      = gameKey;
     this.sessionScore = sessionScore;
 
+    // --- Animation States ---
     this.animProgress = 0;
     this.animFrames   = 24;
     this.startOffsetY = max(height * 0.9, 520);
     this.animComplete = false;
+    
+    // Button hover animations
+    this.btn1Scale = 1.0;
+    this.btn2Scale = 1.0;
 
-    this.CARD_W = 500;
-    this.CARD_H = 450;
+    this.CARD_W = constrain(width * 0.85, 340, 480);
+    this.CARD_H = 460; // Fixed height prevents text overlap
     this._lastMetrics = null;
 
     this._NAMES = {
@@ -27,36 +31,7 @@ class SummaryCard {
     const key = section + "::" + message;
     if (this._loggedErrors.has(key)) return;
     this._loggedErrors.add(key);
-
-    console.error("[SummaryCard] " + section + " failed", {
-      error: err,
-      gameKey: this.gameKey,
-      sessionScore: this.sessionScore,
-      offsetY: this._getOffsetY(),
-      ...extra,
-    });
-  }
-
-  _drawFallbackCard(cx, cy) {
-    fill(255);
-    noStroke();
-    rectMode(CENTER);
-    rect(cx, cy, 420, 240, 22);
-    rectMode(CORNER);
-
-    fill(60);
-    textAlign(CENTER, CENTER);
-    textStyle(BOLD);
-    textSize(30);
-    text("Session Complete", cx, cy - 42);
-
-    textStyle(NORMAL);
-    textSize(18);
-    text("Score: " + this.sessionScore, cx, cy + 2);
-
-    textSize(14);
-    fill(120);
-    text("SummaryCard fallback active", cx, cy + 36);
+    console.error("[SummaryCard] " + section + " failed", { error: err, ...extra });
   }
 
   _easeOutCubic(t) {
@@ -69,35 +44,40 @@ class SummaryCard {
     return (1 - eased) * this.startOffsetY;
   }
 
+  // FIXED: Using absolute offsets from the center (0,0) ensures 
+  // text rows NEVER overlap, regardless of screen size.
   _getMetrics() {
-    const cardW = constrain(width * 0.84, 320, this.CARD_W);
-    const cardH = constrain(height * 0.78, 340, this.CARD_H);
-    const statGap = cardH * 0.12;
-    const btnW = constrain(cardW * 0.36, 130, 190);
-    const btnH = constrain(cardH * 0.11, 38, 48);
-    const btnGapX = cardW * 0.24;
+    const cardW = this.CARD_W;
+    const cardH = this.CARD_H;
+    
+    const btnW = constrain(cardW * 0.4, 140, 200);
+    const btnH = 50;
+    const btnGapX = cardW * 0.23;
 
     return {
-      cardW,
-      cardH,
-      titleY: -cardH * 0.41,
-      gameY: -cardH * 0.34,
-      dividerTopY: -cardH * 0.30,
-      row1Y: -cardH * 0.22,
-      row2Y: -cardH * 0.22 + statGap,
-      row3Y: -cardH * 0.22 + statGap * 2,
-      dividerBottomY: -cardH * 0.01,
-      badgeY: cardH * 0.18,
-      btnY: cardH * 0.37,
+      cardW, cardH,
+      titleY: -165,
+      gameY: -130,
+      dividerTopY: -95,
+      
+      row1Y: -50,
+      row2Y: -5,
+      row3Y: 40,
+      
+      dividerBottomY: 85,
+      badgeY: 130,
+      
+      btnY: 190,
       btn1X: -btnGapX,
       btn2X: btnGapX,
-      btnW,
-      btnH,
-      lineHalf: cardW * 0.41,
-      statsLeftX: -cardW * 0.40,
-      statsRightX: cardW * 0.40,
-      badgeW: constrain(cardW * 0.50, 180, 250),
-      badgeH: constrain(cardH * 0.10, 36, 46),
+      btnW, btnH,
+      
+      lineHalf: cardW * 0.40,
+      statsLeftX: -cardW * 0.38,
+      statsRightX: cardW * 0.38,
+      
+      badgeW: constrain(cardW * 0.6, 200, 280),
+      badgeH: 42,
     };
   }
 
@@ -117,7 +97,8 @@ class SummaryCard {
       blendMode(BLEND);
       rectMode(CORNER);
 
-      fill(0, 165);
+      // Dark Overlay Background
+      fill(0, 150 * this._easeOutCubic(this.animProgress)); // Smooth fade in
       noStroke();
       rect(0, 0, width, height);
 
@@ -131,99 +112,119 @@ class SummaryCard {
       try {
         translate(cx, cy + offsetY);
 
-        drawingContext.shadowBlur = 24;
-        drawingContext.shadowColor = "rgba(0,0,0,0.22)";
+        // 1. Main Card (Glassmorphism)
+        drawingContext.shadowBlur = 30;
+        drawingContext.shadowColor = "rgba(0,0,0,0.2)";
         fill(255);
         noStroke();
         rectMode(CENTER);
-        rect(0, 0, metrics.cardW, metrics.cardH, 28);
+        rect(0, 0, metrics.cardW, metrics.cardH, 25);
         rectMode(CORNER);
-        drawingContext.shadowBlur = 0;
+        drawingContext.shadowBlur = 0; // Reset shadows
 
+        // 2. Headers
         textAlign(CENTER, CENTER);
-        fill(PALETTE.purple);
+        fill(PALETTE?.purple || "#9B5DE5");
         textStyle(BOLD);
-        textSize(constrain(metrics.cardW * 0.06, 22, 30));
+        textSize(28);
         text("Session Complete!", 0, metrics.titleY);
 
         fill(130);
         textStyle(NORMAL);
-        textSize(constrain(metrics.cardW * 0.034, 14, 17));
+        textSize(16);
         text(this._NAMES[this.gameKey] || "Game Over", 0, metrics.gameY);
 
-        stroke(220);
-        strokeWeight(1);
+        // Top Divider
+        stroke(230);
+        strokeWeight(2);
+        strokeCap(ROUND);
         line(-metrics.lineHalf, metrics.dividerTopY, metrics.lineHalf, metrics.dividerTopY);
-        noStroke();
 
-        this._statRow(0, metrics.row1Y, "Stars Earned", "+" + this.sessionScore, "#E6A817", metrics);
-
+        // 3. Stat Rows (with cute icons)
         const recordKey = this.gameKey + "Record";
-        const record = starBank[recordKey] || 0;
+        const record = (typeof starBank !== 'undefined') ? (starBank[recordKey] || 0) : 0;
         const isNewRecord = record > 0 && this.sessionScore >= record;
+        const totalStars = (typeof starBank !== 'undefined') ? starBank.totalStars : 0;
+
+        this._statRow(0, metrics.row1Y, "⭐ Stars Earned", "+" + this.sessionScore, "#E6A817", metrics);
         this._statRow(
-          0,
-          metrics.row2Y,
-          "Best Score",
+          0, metrics.row2Y, "🏆 Best Score", 
           isNewRecord ? record + "  NEW!" : String(record),
-          isNewRecord ? "#2E7D32" : "#999",
+          isNewRecord ? (PALETTE?.green || "#5DC98A") : "#999", 
           metrics
         );
+        this._statRow(0, metrics.row3Y, "🌟 Grand Total", totalStars + " stars", PALETTE?.purple || "#9B5DE5", metrics);
 
-        this._statRow(0, metrics.row3Y, "Grand Total", starBank.totalStars + " stars", PALETTE.purple, metrics);
-
-        stroke(220);
-        strokeWeight(1);
+        // Bottom Divider
+        stroke(230);
+        strokeWeight(2);
         line(-metrics.lineHalf, metrics.dividerBottomY, metrics.lineHalf, metrics.dividerBottomY);
         noStroke();
 
+        // 4. Level Badge
         const badgeY = metrics.badgeY;
-        fill(starBank.getLevelBadgeColor());
+        fill(typeof starBank !== 'undefined' ? starBank.getLevelBadgeColor() : "#FFB7B2");
         rectMode(CENTER);
-        rect(0, badgeY, metrics.badgeW, metrics.badgeH, 23);
+        rect(0, badgeY, metrics.badgeW, metrics.badgeH, 20);
         rectMode(CORNER);
+        
         fill(60);
         textStyle(BOLD);
-        textSize(constrain(metrics.cardW * 0.036, 14, 18));
-        text(starBank.getLevel(), 0, badgeY);
+        textSize(16);
+        text(typeof starBank !== 'undefined' ? starBank.getLevel() : "Level 1", 0, badgeY + 1);
 
-        const btnY = metrics.btnY;
-        const btn1X = metrics.btn1X;
-        const btn2X = metrics.btn2X;
-        const h1 = this._isHover(btn1X, btnY, metrics.btnW, metrics.btnH, offsetY);
-        const h2 = this._isHover(btn2X, btnY, metrics.btnW, metrics.btnH, offsetY);
+        // 5. Interactive Buttons
+        const h1 = this._isHover(metrics.btn1X, metrics.btnY, metrics.btnW, metrics.btnH, offsetY);
+        const h2 = this._isHover(metrics.btn2X, metrics.btnY, metrics.btnW, metrics.btnH, offsetY);
 
-        fill(h1 ? "#2A3B75" : "#3E5296");
-        noStroke();
+        this.btn1Scale = lerp(this.btn1Scale, h1 ? 1.08 : 1.0, 0.2);
+        this.btn2Scale = lerp(this.btn2Scale, h2 ? 1.08 : 1.0, 0.2);
+
+        // Play Again Button
+        push();
+        translate(metrics.btn1X, metrics.btnY);
+        scale(this.btn1Scale);
+        drawingContext.shadowBlur = h1 ? 15 : 5;
+        drawingContext.shadowColor = "rgba(0,0,0,0.15)";
+        fill(h1 ? (PALETTE?.green || "#A0EACD") : (PALETTE?.blue || "#5BACE0"));
         rectMode(CENTER);
-        rect(btn1X, btnY, metrics.btnW, metrics.btnH, metrics.btnH / 2);
-        rectMode(CORNER);
-        fill(255);
-        textSize(constrain(metrics.cardW * 0.032, 12, 16));
+        rect(0, 0, metrics.btnW, metrics.btnH, 25);
+        drawingContext.shadowBlur = 0;
+        fill(h1 ? 255 : 250);
+        textSize(15);
         textStyle(BOLD);
-        text("PLAY AGAIN", btn1X, btnY);
+        text("PLAY AGAIN", 0, 1);
+        pop();
 
-        fill(h2 ? "#555" : "#9E9E9E");
-        noStroke();
+        // Main Menu Button
+        push();
+        translate(metrics.btn2X, metrics.btnY);
+        scale(this.btn2Scale);
+        drawingContext.shadowBlur = h2 ? 15 : 5;
+        drawingContext.shadowColor = "rgba(0,0,0,0.15)";
+        fill(h2 ? "#D0D5E0" : "#E8EAF6"); // Soft grey
         rectMode(CENTER);
-        rect(btn2X, btnY, metrics.btnW, metrics.btnH, metrics.btnH / 2);
-        rectMode(CORNER);
-        fill(255);
-        textSize(constrain(metrics.cardW * 0.032, 12, 16));
+        rect(0, 0, metrics.btnW, metrics.btnH, 25);
+        drawingContext.shadowBlur = 0;
+        fill(100);
+        textSize(15);
         textStyle(BOLD);
-        text("MAIN MENU", btn2X, btnY);
+        text("MAIN MENU", 0, 1);
+        pop();
 
         if (h1 || h2) cursor(HAND);
-        else cursor(ARROW);
+        // (Don't force ARROW here so it doesn't fight global UI state)
+
       } catch (err) {
         this._logError("draw card content", err);
-        this._drawFallbackCard(cx, cy);
       } finally {
         pop();
       }
 
       try {
-        starBank.drawPopAnim();
+        if (typeof starBank !== 'undefined' && starBank.drawPopAnim) {
+           starBank.drawPopAnim();
+        }
       } catch (err) {
         this._logError("draw pop animation", err);
       }
@@ -235,6 +236,7 @@ class SummaryCard {
   }
 
   isPlayAgainClicked() {
+    if (this.animProgress < 0.9) return false;
     const m = this._lastMetrics || this._getMetrics();
     const btnY = height / 2 + m.btnY + this._getOffsetY();
     const btn1X = width / 2 + m.btn1X;
@@ -242,6 +244,7 @@ class SummaryCard {
   }
 
   isMenuClicked() {
+    if (this.animProgress < 0.9) return false;
     const m = this._lastMetrics || this._getMetrics();
     const btnY = height / 2 + m.btnY + this._getOffsetY();
     const btn2X = width / 2 + m.btn2X;
@@ -250,14 +253,17 @@ class SummaryCard {
 
   _statRow(cx, y, label, value, valueColor, metrics) {
     noStroke();
+    
+    // Left Label
     fill(100);
-    textSize(constrain(metrics.cardW * 0.032, 12, 16));
-    textStyle(NORMAL);
+    textSize(18);
+    textStyle(BOLD);
     textAlign(LEFT, CENTER);
     text(label, cx + metrics.statsLeftX, y);
 
-    fill(valueColor || PALETTE.text || "#5D5D5D");
-    textSize(constrain(metrics.cardW * 0.032, 12, 16));
+    // Right Value
+    fill(valueColor || PALETTE?.text || "#5D5D5D");
+    textSize(18);
     textStyle(BOLD);
     textAlign(RIGHT, CENTER);
     text(value, cx + metrics.statsRightX, y);

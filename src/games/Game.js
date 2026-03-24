@@ -75,7 +75,7 @@ class Game {
     fill(PALETTE.text || 50);
     let hudX = 30;
     let hudY = height - 30;
-    text("Lives: " + "Ã¢ÂÂ¤Ã¯Â¸Â".repeat(this.lives), hudX, hudY - 70);
+    text("Lives: " + "❤️".repeat(this.lives), hudX, hudY - 70);
     text("Level: " + this.level, hudX, hudY - 40);
     text("Score: " + this.score, hudX, hudY - 10);
   }

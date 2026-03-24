@@ -108,6 +108,14 @@ class TiptoeTrails extends Game {
     this._syncLayout();
     this.handleLogic();
 
+    push();
+    if (this.shakeTimer > 0) {
+      let shakeX = random(-6, 6);
+      let shakeY = random(-6, 6);
+      translate(shakeX, shakeY);
+      this.shakeTimer--;
+    }
+
     rectMode(CENTER);
     let visibleSteps = floor(this.previewTimer / this.stepInterval);
     if (this.gameState === "INPUT") visibleSteps = 0;
@@ -177,12 +185,7 @@ class TiptoeTrails extends Game {
     }
     rectMode(CORNER);
 
-    if (this.flashTimer > 0) {
-      fill(211, 47, 47, this.flashTimer * 10);
-      noStroke();
-      rect(0, 0, width, height);
-      this.flashTimer--;
-    }
+    pop();
 
     this.handleUI();
   }
@@ -244,7 +247,7 @@ class TiptoeTrails extends Game {
       }
     } else {
       this.lives--;
-      this.flashTimer = 15;
+      this.shakeTimer = 15;
 
       if (this.lives <= 0) {
           this.playerPath.push({ x: col, y: row });
@@ -288,7 +291,7 @@ class TiptoeTrails extends Game {
     textSize(14); textStyle(BOLD);
     text("LIVES", hudX + 20, hudY + 20);
     textSize(20);
-    text("Ã¢ÂÂ¤Ã¯Â¸Â".repeat(this.lives), hudX + 20, hudY + 40);
+    text("❤️".repeat(this.lives), hudX + 20, hudY + 40);
 
     textSize(14); textStyle(BOLD); fill(80);
     text("LEVEL", hudX + 20, hudY + 80);

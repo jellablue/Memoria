@@ -221,7 +221,7 @@ class KaleidoPop extends Game {
     textSize(14); textStyle(BOLD);
     text("LIVES", hudX + 20, hudY + 20);
     textSize(20);
-    text("Ã¢ÂÂ¤Ã¯Â¸Â".repeat(this.lives), hudX + 20, hudY + 40);
+    text("❤️".repeat(this.lives), hudX + 20, hudY + 40);
 
     textSize(14); textStyle(BOLD); fill(80);
     text("LEVEL", hudX + 20, hudY + 80);
