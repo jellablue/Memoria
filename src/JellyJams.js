@@ -91,6 +91,7 @@ class JellyJams extends Game {
     this._syncLayout();
     this.handleLogic();
     this.updateBlu();
+    this.drawDynamicBackground();
     
     push(); 
     if (this.shakeTimer > 0) {
@@ -259,27 +260,42 @@ class JellyJams extends Game {
     }
   }
 
-  handleUI() {
+ handleUI() {
     noStroke();
     let topY = height * 0.1;
 
     push();
     textAlign(CENTER, CENTER);
+    
+    // Glassmorphism effect for the Top Banner
+    drawingContext.shadowBlur = 20;
+    drawingContext.shadowColor = "rgba(0,0,0,0.15)";
+    
     if (this.gameState === "WATCH") {
-       fill(255, 200);
+       fill(255, 210);
+       stroke(255); strokeWeight(2);
        rectMode(CENTER);
-       rect(width / 2, topY, 380, 50, 25);
-       fill(PALETTE?.purple || 80);
+       rect(width / 2, topY, 400, 60, 30);
+       
+       drawingContext.shadowBlur = 0; // Reset shadows for text
+       noStroke();
+       fill(PALETTE?.purple || "#9B5DE5");
        textSize(22); textStyle(BOLD);
        text("Watch Blu memorise the tune...", width / 2, topY);
     }
     else if (this.gameState === "INPUT") {
-       fill(255, 220);
+       fill(255, 210);
+       stroke(255); strokeWeight(2);
        rectMode(CENTER);
-       rect(width / 2, topY, 400, 60, 30);
+       rect(width / 2, topY, 440, 60, 30);
 
+       drawingContext.shadowBlur = 0; // Reset shadows for text
+       noStroke();
+       
        if (this.isReverse) {
-         fill("#D32F2F");
+         // Pulsing warning color for Reverse Mode
+         let pulseRed = lerpColor(color("#D32F2F"), color("#FF5252"), (sin(frameCount * 0.1) + 1) / 2);
+         fill(pulseRed);
          textSize(24); textStyle(BOLD);
          text("↺ REWIND! Input Backwards! ↺", width / 2, topY);
        } else {
@@ -290,35 +306,50 @@ class JellyJams extends Game {
     }
     pop();
 
+    // --- LEFT HUD (Lives, Level, Score) ---
+    push();
     let hudX = max(40, width * 0.05);
     let hudY = height / 2 - 100;
 
-    fill(255, 180); noStroke();
-    rect(hudX, hudY, 160, 200, 20);
+    // Glassmorphism Base
+    drawingContext.shadowBlur = 25;
+    drawingContext.shadowColor = "rgba(0,0,0,0.1)";
+    fill(255, 210); 
+    stroke(255); 
+    strokeWeight(2);
+    rectMode(CORNER);
+    
+    // Expand the height dynamically if reverse mode is active
+    let hudH = this.isReverse ? 250 : 210;
+    rect(hudX, hudY, 160, hudH, 20); 
+    
+    drawingContext.shadowBlur = 0;
+    noStroke();
 
     fill(80); textAlign(LEFT, TOP);
     textSize(14); textStyle(BOLD);
-    text("LIVES", hudX + 20, hudY + 20);
+    text("LIVES", hudX + 25, hudY + 25);
     textSize(20);
-    text("❤️".repeat(this.lives), hudX + 20, hudY + 40);
+    text("❤️".repeat(max(0, this.lives)), hudX + 25, hudY + 45);
 
     textSize(14); textStyle(BOLD); fill(80);
-    text("LEVEL", hudX + 20, hudY + 80);
-    textSize(24); fill(PALETTE?.blue || "#5BACE0");
-    text(this.level, hudX + 20, hudY + 100);
+    text("LEVEL", hudX + 25, hudY + 85);
+    textSize(28); fill(PALETTE?.blue || "#5BACE0");
+    text(this.level, hudX + 25, hudY + 105);
 
     textSize(14); textStyle(BOLD); fill(80);
-    text("SCORE", hudX + 20, hudY + 140);
-    textSize(24); fill(PALETTE?.green || "#5DC98A");
-    text(this.score, hudX + 20, hudY + 160);
+    text("SCORE", hudX + 25, hudY + 150);
+    textSize(28); fill(PALETTE?.green || "#5DC98A");
+    text(this.score, hudX + 25, hudY + 170);
 
     if (this.isReverse) {
       fill("#D32F2F");
       textSize(14); textAlign(CENTER, TOP);
-      text("REVERSE MODE", hudX + 80, hudY + 220);
+      text("⚠️ REVERSE ⚠️", hudX + 80, hudY + 215);
     }
     pop();
 
+    // Overlays
     if (this.gameState === "IDLE") this.drawPopupCard("Jelly Jams", "START GAME");
     else if (this.gameState === "RESULT") this.drawPopupCard("Level Complete!", "NEXT LEVEL >>");
     else if (this.gameState === "GAMEOVER") this.drawPopupCard("Game Over", "TRY AGAIN");
@@ -394,38 +425,172 @@ class JellyJams extends Game {
     this.blu.y = lerp(this.blu.y, this.blu.targetY, 0.15);
   }
 
-  drawBlu() {
+ drawBlu() {
     push();
+    // Smooth movement tracking
     translate(this.blu.x, this.blu.y);
 
-    noStroke(); fill(0, 50); ellipse(0, 20, 30, 10);
+    // Drop Shadow
+    noStroke(); 
+    fill(0, 50); 
+    ellipse(0, 20, 30, 10);
 
+    // Bounce effect based on distance to target
     let jumpHeight = dist(this.blu.x, this.blu.y, this.blu.targetX, this.blu.targetY);
     let bounce = min(jumpHeight * 0.4, 60);
     translate(0, -bounce);
 
+    // --- ANIMATION PARAMETERS ---
+    // Scale up the base size slightly for Jelly Jams visibility
+    const bluSize = this.blu.size * 2.2; 
+    const floatY  = sin(frameCount * 0.05) * 5; 
+    const breath  = sin(frameCount * 0.08) * (bluSize * 0.03); 
+    const armSwing = sin(frameCount * 0.1) * 12; 
+
+    // Reverse Mode "Panic" Modifier
     if (this.isReverse) {
-      rotate(sin(frameCount * 0.2) * 0.5);
-      fill(PALETTE?.pink || "#FFB7B2");
-      ellipse(20, -20, 8, 8); ellipse(-20, 10, 5, 5);
+      rotate(sin(frameCount * 0.3) * 0.15); // Wobble side to side
+    }
+    
+    translate(0, floatY); // Apply floating
+
+    // 1. Glow Halo
+    for (let g = 3; g > 0; g--) {
+      noStroke();
+      fill(100, 160, 255, 12 * g);
+      circle(0, 0, bluSize + g * 12);
     }
 
-    fill(this.isReverse ? (PALETTE?.purple || "#C3B1E1") : color(50, 100, 255));
-    ellipse(0, 0, this.blu.size, this.blu.size);
+    // 2. Animated Arms (With Panic mode flailing!)
+    let bodyColor = this.isReverse ? (PALETTE?.purple || color(195, 177, 225)) : (PALETTE?.blue || color(80, 160, 255));
+    fill(bodyColor);
+    noStroke();
+    
+    // Left Arm
+    push();
+    translate(-bluSize * 0.45, 0);
+    rotate(radians(this.isReverse ? armSwing * 3 : armSwing - 20)); 
+    ellipse(-bluSize * 0.1, 0, bluSize * 0.25, bluSize * 0.12);
+    pop();
 
-    fill(255); ellipse(-8, -5, 12, 12); ellipse(8, -5, 12, 12);
-    fill(0);
+    // Right Arm
+    push();
+    translate(bluSize * 0.45, 0);
+    rotate(radians(this.isReverse ? -armSwing * 3 : -armSwing + 20));
+    ellipse(bluSize * 0.1, 0, bluSize * 0.25, bluSize * 0.12);
+    pop();
+
+    // 3. Main Body (Squircle)
+    rectMode(CENTER);
+    rect(0, 0, bluSize + breath, bluSize - breath, bluSize * 0.4);
+
+    // 4. Cheeks
+    fill(255, 160, 180, 140);
+    ellipse(-bluSize * 0.28, bluSize * 0.1, bluSize * 0.22, bluSize * 0.14);
+    ellipse( bluSize * 0.28, bluSize * 0.1, bluSize * 0.22, bluSize * 0.14);
+
+    // 5. Eyes
+    fill(255); // Sclera
+    ellipse(-bluSize * 0.18, -bluSize * 0.1, bluSize * 0.35, bluSize * 0.35);
+    ellipse( bluSize * 0.18, -bluSize * 0.1, bluSize * 0.35, bluSize * 0.35);
+    
+    fill(30); // Pupils
     if (this.isReverse) {
-      ellipse(-8 + sin(frameCount * 0.5) * 3, -5, 4, 4);
-      ellipse(8 - sin(frameCount * 0.5) * 3, -5, 4, 4);
+      // Dizzy / Crossed eyes looking inward
+      ellipse(-bluSize * 0.18 + sin(frameCount * 0.5) * 4, -bluSize * 0.1, bluSize * 0.15, bluSize * 0.15);
+      ellipse( bluSize * 0.18 - sin(frameCount * 0.5) * 4, -bluSize * 0.1, bluSize * 0.15, bluSize * 0.15);
     } else {
-      ellipse(-8, -5, 5, 5); ellipse(8, -5, 5, 5);
+      // Normal looking eyes
+      ellipse(-bluSize * 0.18, -bluSize * 0.1, bluSize * 0.18, bluSize * 0.18);
+      ellipse( bluSize * 0.18, -bluSize * 0.1, bluSize * 0.18, bluSize * 0.18);
+    }
+    
+    // Eye Shines (Disable complex shines if dizzy)
+    if (!this.isReverse) {
+        fill(255);
+        ellipse(-bluSize * 0.13, -bluSize * 0.14, bluSize * 0.08, bluSize * 0.08);
+        ellipse( bluSize * 0.23, -bluSize * 0.14, bluSize * 0.08, bluSize * 0.08);
+        ellipse(-bluSize * 0.22, -bluSize * 0.06, bluSize * 0.03, bluSize * 0.03);
+        ellipse( bluSize * 0.14, -bluSize * 0.06, bluSize * 0.03, bluSize * 0.03);
     }
 
-    noFill(); stroke(0); strokeWeight(2);
-    if (this.isReverse) ellipse(0, 5, 10, 10);
-    else arc(0, 5, 10, 5, 0, PI);
+    // 6. Mouth / Expression
+    if (this.isReverse) {
+        noFill(); 
+        stroke(30); 
+        strokeWeight(max(2, bluSize * 0.035));
+        ellipse(0, bluSize * 0.12, bluSize * 0.12, bluSize * 0.15); 
+    } else {
+        noFill();
+        stroke(30);
+        strokeWeight(max(2, bluSize * 0.035));
+        arc(0, bluSize * 0.12 - (breath * 0.5), bluSize * 0.26, bluSize * 0.16, 0, PI); 
+    }
 
+    // 7. Tiny Star Accessory
+    noStroke();
+    fill(255, 220, 60);
+    push();
+    translate(-bluSize * 0.42 - (breath*0.5), -bluSize * 0.38 + (breath*0.5));
+    
+    let outerRadius = bluSize * 0.09;
+    let innerRadius = bluSize * 0.045;
+    let angle = TWO_PI / 5;
+    let halfAngle = angle / 2.0;
+    beginShape();
+    for (let a = 0; a < TWO_PI; a += angle) {
+      let sx = cos(a - HALF_PI) * outerRadius;
+      let sy = sin(a - HALF_PI) * outerRadius;
+      vertex(sx, sy);
+      sx = cos(a + halfAngle - HALF_PI) * innerRadius;
+      sy = sin(a + halfAngle - HALF_PI) * innerRadius;
+      vertex(sx, sy);
+    }
+    endShape(CLOSE);
+    pop();
+    
+    pop(); 
+  }
+
+  drawDynamicBackground() {
+    push();
+    noStroke();
+    
+    let colors = [
+      PALETTE?.pink || "#FFB7B2", PALETTE?.blue || "#B5CDF5",
+      PALETTE?.yellow || "#FDFD96", PALETTE?.green || "#A0EACD",
+      PALETTE?.purple || "#C3B1E1"
+    ];
+
+    for (let i = 0; i < 15; i++) {
+      let x = (width / 2) + sin(frameCount * 0.003 + i * 2.1) * (width * 0.5);
+      let y = (height / 2) + cos(frameCount * 0.004 + i * 3.4) * (height * 0.5);
+      let size = 100 + sin(frameCount * 0.02 + i) * 50;
+
+      let col = color(colors[i % colors.length]);
+      col.setAlpha(30); // Very transparent to not distract from the game
+      
+      fill(col);
+      circle(x, y, size);
+    }
+
+    
+    let isPlaying = this.jellies.some(j => j.active);
+    
+    let targetWaveHeight = isPlaying ? 60 : 15;
+    this.waveHeight = lerp(this.waveHeight || 15, targetWaveHeight, 0.15);
+
+    fill(255, 30); 
+    beginShape();
+    vertex(0, height);
+    for (let x = 0; x <= width + 50; x += 50) {
+      let wave1 = sin(frameCount * 0.05 + x * 0.01) * this.waveHeight;
+      let wave2 = cos(frameCount * 0.07 + x * 0.02) * (this.waveHeight * 0.5);
+      vertex(x, height - 70 + wave1 + wave2);
+    }
+    vertex(width, height);
+    endShape(CLOSE);
+    
     pop();
   }
 }

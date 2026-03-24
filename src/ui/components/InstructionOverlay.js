@@ -1,4 +1,3 @@
-
 class InstructionOverlay {
   constructor(gameKey) {
     this.gameKey = gameKey;
@@ -35,64 +34,74 @@ class InstructionOverlay {
 
     this.animT = lerp(this.animT, 1.0, 0.15);
 
+    // 1. Isolate the background dimming to cover the whole screen securely
     push();
-
+    resetMatrix(); 
     noStroke();
-    fill(0, 150 * this.animT);
+    fill(0, 180 * this.animT); // Slightly darker for better text contrast
     rectMode(CORNER);
     rect(0, 0, width, height);
+    pop();
 
+    push();
+    // Establish our center coordinate system
     translate(width / 2, height / 2);
     scale(this.animT);
 
+    // 2. Main Card Base
     drawingContext.shadowBlur = 40;
-    drawingContext.shadowColor = 'rgba(0,0,0,0.25)';
+    drawingContext.shadowColor = 'rgba(0,0,0,0.3)';
     fill(255);
     stroke(PALETTE?.purple || "#C3B1E1");
-    strokeWeight(3);
+    strokeWeight(4);
     rectMode(CENTER);
-    rect(0, 0, boxW, boxH, 25);
-
-    rectMode(CORNER);
+    rect(0, 0, boxW, boxH, 30); 
 
     drawingContext.shadowBlur = 0;
     noStroke();
 
+    // 3. Title (Perfectly Centered)
     fill(PALETTE?.purple || "#9B5DE5");
     textSize(constrain(boxW * 0.07, 26, 36));
     textStyle(BOLD);
-    textAlign(CENTER, TOP);
-    text(this.info.title, 0, -boxH / 2 + 30);
+    textAlign(CENTER, CENTER);
+    text(this.info.title, 0, -boxH / 2 + 45);
 
+    // Decorative Separator Line
     stroke(230);
     strokeWeight(2);
     strokeCap(ROUND);
-    line(-boxW * 0.35, -boxH / 2 + 80, boxW * 0.35, -boxH / 2 + 80);
+    line(-boxW * 0.3, -boxH / 2 + 80, boxW * 0.3, -boxH / 2 + 80);
     noStroke();
 
-    fill(70);
-    textSize(constrain(boxW * 0.035, 15, 18));
+    // 4. Instructions (Centered Typography Stack)
+    fill(60); // Darker gray for better legibility
+    textSize(constrain(boxW * 0.038, 16, 20));
     textStyle(NORMAL);
-    textAlign(LEFT, TOP);
+    textAlign(CENTER, TOP);
 
     let stepStartY = -boxH / 2 + 105;
-    let stepSpacing = constrain(boxH * 0.1, 40, 55);
+    let stepSpacing = constrain(boxH * 0.12, 45, 65);
 
     for (let i = 0; i < this.info.steps.length; i++) {
-      fill(PALETTE?.pink || "#FFB7B2");
-      circle(-boxW / 2 + 40, stepStartY + i * stepSpacing + 10, 10);
+      // Centered decorative dot above each step
+      // fill(PALETTE?.pink || "#FFB7B2");
+      // circle(0, stepStartY + i * stepSpacing, 8);
 
-      fill(70);
-      text(this.info.steps[i], -boxW / 2 + 65, stepStartY + i * stepSpacing, boxW - 100);
+      // Centered Text Bounding Box
+      fill(60);
+      rectMode(CENTER);
+      // By using x=0 and a width boundary (boxW * 0.8), p5.js auto-wraps and centers the text!
+      text(this.info.steps[i], 0, stepStartY + i * stepSpacing + 15, boxW * 0.8);
     }
 
-    fill(130);
+    // 5. Science Fact (Bottom Centered)
+    fill(120);
     textSize(constrain(boxW * 0.03, 13, 15));
     textStyle(ITALIC);
     textAlign(CENTER, BOTTOM);
-
-    let sciW = boxW * 0.85;
-    text(this.info.science, -sciW / 2, boxH / 2 - 95, sciW);
+    rectMode(CENTER);
+    text(this.info.science, 0, boxH / 2 - 90, boxW * 0.85);
 
     this.drawButton();
 
@@ -101,8 +110,7 @@ class InstructionOverlay {
 
   drawButton() {
     const { boxH, btnW, btnH } = this.layout;
-
-    let btnY = boxH / 2 - 45;
+    let btnY = boxH / 2 - 40;
 
     let isHovered = false;
     if (this.animT > 0.9) {
@@ -115,14 +123,17 @@ class InstructionOverlay {
       );
     }
 
-    this.btnScale = lerp(this.btnScale, isHovered ? 1.08 : 1.0, 0.2);
+    // Parametric Animation: Continuous "Breathing" Pulse
+    let pulse = 1.0 + sin(frameCount * 0.05) * 0.02;
+    this.btnScale = lerp(this.btnScale, isHovered ? 1.08 : pulse, 0.2);
 
     push();
     translate(0, btnY);
     scale(this.btnScale);
 
-    drawingContext.shadowBlur = isHovered ? 20 : 8;
-    drawingContext.shadowColor = "rgba(0,0,0,0.15)";
+    // Dynamic shadow that glows green when hovered
+    drawingContext.shadowBlur = isHovered ? 25 : 12;
+    drawingContext.shadowColor = isHovered ? "rgba(93,201,138,0.4)" : "rgba(0,0,0,0.15)";
 
     fill(isHovered ? (PALETTE?.green || "#A0EACD") : (PALETTE?.blue || "#B5CDF5"));
     if (isHovered) cursor(HAND);
@@ -144,7 +155,7 @@ class InstructionOverlay {
     if (this.animT < 0.9) return false;
 
     const { boxH, btnW, btnH } = this.layout;
-    let btnY = boxH / 2 - 45;
+    let btnY = boxH / 2 - 40;
 
     let relativeMouseX = mouseX - width / 2;
     let relativeMouseY = mouseY - height / 2;
