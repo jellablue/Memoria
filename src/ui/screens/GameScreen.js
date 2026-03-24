@@ -171,6 +171,7 @@ class GameScreen {
       if (this.summaryCard.isMenuClicked && this.summaryCard.isMenuClicked()) {
         this.summaryCard = null;
         this._scoreReported = false;
+        if (typeof audioManager !== 'undefined') audioManager.playBackgroundMusic("menu");
         gameState.setScreen(GAME_STATES.MENU);
         gameState.hideGameInstructions();
         return true;
@@ -181,6 +182,7 @@ class GameScreen {
     let cx = max(40, width * 0.05);
     let cy = max(40, height * 0.06);
     if (dist(mouseX, mouseY, cx, cy) < 24) {
+      if (typeof audioManager !== 'undefined') audioManager.playBackgroundMusic("menu");
       gameState.setScreen(GAME_STATES.MENU);
       gameState.hideGameInstructions();
       return true;

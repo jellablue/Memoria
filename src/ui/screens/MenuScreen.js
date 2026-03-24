@@ -272,7 +272,14 @@ class MenuScreen {
 
     for (let btn of this.menuButtons) {
       if (btn.isClicked && btn.isClicked()) {
-        if (typeof audioManager !== 'undefined') audioManager.playSound("petal");
+       if (typeof audioManager !== 'undefined') {
+        audioManager.playSound("petal");
+        
+        if (btn.action === "GAME_A") audioManager.playBackgroundMusic("kaleido");
+        if (btn.action === "GAME_B") audioManager.playBackgroundMusic("jelly");
+        if (btn.action === "GAME_C") audioManager.playBackgroundMusic("tiptoe");
+      }
+
         gameState.showGameInstructions(btn.action);
         uiManager.requestTransition(btn.action);
         return true;

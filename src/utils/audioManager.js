@@ -1,96 +1,117 @@
-
 class AudioManager {
   constructor() {
-    this.bgMusic = null;
+    this.bgmTracks = {}; 
+    this.currentTrackName = "menu"; 
+    this.currentBgm = null;         
+    
     this.petalSound = null;
     this.cloudSound = null;
-    this.bgmEnabled = true;
-    this.sfxEnabled = true;
+    
+    this.enabled = true;
+    
     this.bgmVolume = 0.45;
-    this.sfxVolume = 0.8;
+    this.sfxVolume = 0.80;
+
+    this.bgmMix = {
+      menu: 1.0,
+      kaleido: 0.5,
+      jelly: 0.0,
+      tiptoe: 0.5,
+    };
   }
 
   preload() {
     if (typeof loadSound !== "undefined") {
       try {
-        this.bgMusic = loadSound("assets/bg-music.mp3");
+        // Load the default music
+        this.bgmTracks["menu"] = loadSound("assets/bg-music.mp3");
+        
+        // Load the game music
+        this.bgmTracks["kaleido"] = loadSound("assets/kaleido-music.mp3");
+        this.bgmTracks["jelly"] = loadSound("assets/jellyjams-music.mp3");
+        this.bgmTracks["tiptoe"] = loadSound("assets/tiptoe-music.mp3");
+
+        // Load SFX
         this.petalSound = loadSound("assets/petal-click.mp3");
-        this.cloudSound = loadSound("assets/cloud-transition.mp3");
+        this.cloudSound = loadSound("assets/cloud-transition.mp3"); 
       } catch (e) {
         console.warn("Audio files not found:", e);
       }
     }
   }
 
-  playBackgroundMusic() {
-    if (!this.bgMusic || !this.bgmEnabled) return;
-    this.bgMusic.setVolume(this.bgmVolume);
-    if (!this.bgMusic.isPlaying()) {
-      this.bgMusic.loop();
+  
+  playBackgroundMusic(trackName = this.currentTrackName) {
+    if (!this.enabled) return;
+
+    if (this.currentTrackName !== trackName) {
+      this.stopBackgroundMusic(); 
+      this.currentTrackName = trackName;
+    }
+
+    this.currentBgm = this.bgmTracks[this.currentTrackName];
+
+    const mix = this.bgmMix[this.currentTrackName] ?? 1.0;
+    if (mix <= 0) {
+      this.stopBackgroundMusic();
+      this.currentBgm = null;
+      return;
+    }
+
+    if (this.currentBgm && !this.currentBgm.isPlaying()) {
+      this.currentBgm.setVolume(this.bgmVolume * mix);
+      this.currentBgm.loop();
+    } else if (this.currentBgm && this.currentBgm.isPlaying()) {
+      this.currentBgm.setVolume(this.bgmVolume * mix);
     }
   }
 
   stopBackgroundMusic() {
-    if (this.bgMusic && this.bgMusic.isPlaying()) {
-      this.bgMusic.stop();
+    if (this.currentBgm && this.currentBgm.isPlaying()) {
+      this.currentBgm.stop();
     }
   }
 
   playSound(soundName) {
-    if (!this.sfxEnabled) return;
+    if (!this.enabled) return;
+    
+    let sfx = null;
+    if (soundName === "petal") sfx = this.petalSound;
+    if (soundName === "cloud") sfx = this.cloudSound;
 
-    switch (soundName) {
-      case "petal":
-        if (this.petalSound) {
-          this.petalSound.setVolume(this.sfxVolume);
-          this.petalSound.play();
-        }
-        break;
-      case "cloud": 
-        if (this.cloudSound) {
-          this.cloudSound.setVolume(this.sfxVolume);
-          this.cloudSound.play();
-        }
-        break;
+    if (sfx) {
+      sfx.setVolume(this.sfxVolume);
+      sfx.play();
     }
   }
 
-  toggleAudio() {
-    const next = !(this.bgmEnabled && this.sfxEnabled);
-    this.setBgmEnabled(next);
-    this.setSfxEnabled(next);
+  setBgmEnabled(state) {
+    this.enabled = state;
+    if (state) this.playBackgroundMusic();
+    else this.stopBackgroundMusic();
   }
 
-  setBgmEnabled(enabled) {
-    this.bgmEnabled = !!enabled;
-    if (!this.bgmEnabled) {
-      this.stopBackgroundMusic();
-    } else {
-      this.playBackgroundMusic();
+  setSfxEnabled(state) {
+  }
+
+  setBgmVolume(v) {
+    this.bgmVolume = v;
+    if (this.currentBgm) {
+      const mix = this.bgmMix[this.currentTrackName] ?? 1.0;
+      this.currentBgm.setVolume(this.bgmVolume * mix);
     }
   }
 
-  setSfxEnabled(enabled) {
-    this.sfxEnabled = !!enabled;
-  }
-
-  setBgmVolume(volume) {
-    this.bgmVolume = constrain(volume, 0, 1);
-    if (this.bgMusic) {
-      this.bgMusic.setVolume(this.bgmVolume);
-    }
-  }
-
-  setSfxVolume(volume) {
-    this.sfxVolume = constrain(volume, 0, 1);
+  setSfxVolume(v) {
+    this.sfxVolume = v;
   }
 
   getSettings() {
     return {
-      bgmEnabled: this.bgmEnabled,
-      sfxEnabled: this.sfxEnabled,
+      bgmEnabled: this.enabled && this.bgmVolume > 0,
       bgmVolume: this.bgmVolume,
-      sfxVolume: this.sfxVolume,
+      sfxEnabled: this.enabled && this.sfxVolume > 0,
+      sfxVolume: this.sfxVolume
     };
   }
 }

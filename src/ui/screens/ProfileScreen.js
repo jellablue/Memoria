@@ -401,6 +401,7 @@ class ProfileScreen {
     let cy = max(40, height * 0.06);
 
     if (dist(mouseX, mouseY, cx, cy) < 24) {
+      if (typeof audioManager !== 'undefined') audioManager.playBackgroundMusic("menu");
       gameState.setScreen(GAME_STATES.MENU);
       if (typeof audioManager !== 'undefined') audioManager.playSound("petal");
 

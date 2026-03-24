@@ -4,7 +4,6 @@ class SummaryCard {
     this.sessionScore = sessionScore;
     this.starsEarned  = (starsEarned !== undefined) ? starsEarned : sessionScore;
 
-    // --- Animation States ---
     this.animProgress = 0;
     this.animFrames   = 24;
     this.startOffsetY = max(height * 0.9, 520);
@@ -45,8 +44,6 @@ class SummaryCard {
     return (1 - eased) * this.startOffsetY;
   }
 
-  // FIXED: Using absolute offsets from the center (0,0) ensures 
-  // text rows NEVER overlap, regardless of screen size.
   _getMetrics() {
     const cardW = this.CARD_W;
     const cardH = this.CARD_H;
@@ -98,8 +95,7 @@ class SummaryCard {
       blendMode(BLEND);
       rectMode(CORNER);
 
-      // Dark Overlay Background
-      fill(0, 150 * this._easeOutCubic(this.animProgress)); // Smooth fade in
+      fill(0, 150 * this._easeOutCubic(this.animProgress)); 
       noStroke();
       rect(0, 0, width, height);
 
@@ -113,7 +109,7 @@ class SummaryCard {
       try {
         translate(cx, cy + offsetY);
 
-        // 1. Main Card (Glassmorphism)
+        // Main Card 
         drawingContext.shadowBlur = 30;
         drawingContext.shadowColor = "rgba(0,0,0,0.2)";
         fill(255);
@@ -141,7 +137,7 @@ class SummaryCard {
         strokeCap(ROUND);
         line(-metrics.lineHalf, metrics.dividerTopY, metrics.lineHalf, metrics.dividerTopY);
 
-        // 3. Stat Rows (with cute icons)
+        // Stat Rows (with cute icons)
         const recordKey = this.gameKey + "Record";
         const record = (typeof starBank !== 'undefined') ? (starBank[recordKey] || 0) : 0;
         const isNewRecord = record > 0 && this.sessionScore >= record;
@@ -162,7 +158,7 @@ class SummaryCard {
         line(-metrics.lineHalf, metrics.dividerBottomY, metrics.lineHalf, metrics.dividerBottomY);
         noStroke();
 
-        // 4. Level Badge
+        // Level Badge
         const badgeY = metrics.badgeY;
         fill(typeof starBank !== 'undefined' ? starBank.getLevelBadgeColor() : "#FFB7B2");
         rectMode(CENTER);
@@ -174,7 +170,7 @@ class SummaryCard {
         textSize(16);
         text(typeof starBank !== 'undefined' ? starBank.getLevel() : "Level 1", 0, badgeY + 1);
 
-        // 5. Interactive Buttons
+        // Interactive Buttons
         const h1 = this._isHover(metrics.btn1X, metrics.btnY, metrics.btnW, metrics.btnH, offsetY);
         const h2 = this._isHover(metrics.btn2X, metrics.btnY, metrics.btnW, metrics.btnH, offsetY);
 
@@ -214,7 +210,7 @@ class SummaryCard {
         pop();
 
         if (h1 || h2) cursor(HAND);
-        // (Don't force ARROW here so it doesn't fight global UI state)
+        
 
       } catch (err) {
         this._logError("draw card content", err);

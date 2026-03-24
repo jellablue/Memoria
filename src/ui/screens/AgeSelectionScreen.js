@@ -32,9 +32,9 @@ class AgeSelectionScreen {
       const startX = (width - totalW) / 2 + cardW / 2;
 
       this.ageCards = [
-        new AgeCard(startX, y, "Explorer", "Age 5-12", PALETTE?.green || "#A0EACD", cardW, cardH),
-        new AgeCard(startX + cardW + gap, y, "Adventurer", "Age 13-59", PALETTE?.blue || "#B5CDF5", cardW, cardH),
-        new AgeCard(startX + (cardW + gap) * 2, y, "Master", "Age 60+", PALETTE?.pink || "#F6C0D9", cardW, cardH),
+        new AgeCard(startX, y, "Explorer", "Beginner", PALETTE?.green || "#A0EACD", cardW, cardH),
+        new AgeCard(startX + cardW + gap, y, "Adventurer", "Intermediate", PALETTE?.blue || "#B5CDF5", cardW, cardH),
+        new AgeCard(startX + (cardW + gap) * 2, y, "Master", "Expert", PALETTE?.pink || "#F6C0D9", cardW, cardH),
       ];
     }
 
@@ -136,6 +136,7 @@ class AgeSelectionScreen {
         gameState.initializeGames();
 
         if (typeof audioManager !== 'undefined') audioManager.playSound("petal");
+        if (typeof audioManager !== 'undefined') audioManager.playBackgroundMusic("menu");
 
         uiManager.requestTransition(GAME_STATES.MENU);
         return true;
