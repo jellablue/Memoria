@@ -8,6 +8,8 @@ class AudioManager {
     this.cloudSound = null;
     
     this.enabled = true;
+    this.bgmEnabled = true;
+    this.sfxEnabled = true;
     
     this.bgmVolume = 0.45;
     this.sfxVolume = 0.80;
@@ -42,7 +44,7 @@ class AudioManager {
 
   
   playBackgroundMusic(trackName = this.currentTrackName) {
-    if (!this.enabled) return;
+    if (!this.bgmEnabled) return;
 
     if (this.currentTrackName !== trackName) {
       this.stopBackgroundMusic(); 
@@ -73,7 +75,7 @@ class AudioManager {
   }
 
   playSound(soundName) {
-    if (!this.enabled) return;
+    if (!this.sfxEnabled) return;
     
     let sfx = null;
     if (soundName === "petal") sfx = this.petalSound;
@@ -86,12 +88,13 @@ class AudioManager {
   }
 
   setBgmEnabled(state) {
-    this.enabled = state;
-    if (state) this.playBackgroundMusic();
+    this.bgmEnabled = !!state;
+    if (this.bgmEnabled) this.playBackgroundMusic();
     else this.stopBackgroundMusic();
   }
 
   setSfxEnabled(state) {
+    this.sfxEnabled = !!state;
   }
 
   setBgmVolume(v) {
@@ -108,9 +111,9 @@ class AudioManager {
 
   getSettings() {
     return {
-      bgmEnabled: this.enabled && this.bgmVolume > 0,
+      bgmEnabled: this.bgmEnabled,
       bgmVolume: this.bgmVolume,
-      sfxEnabled: this.enabled && this.sfxVolume > 0,
+      sfxEnabled: this.sfxEnabled,
       sfxVolume: this.sfxVolume
     };
   }
