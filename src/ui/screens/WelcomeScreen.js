@@ -11,7 +11,6 @@ class WelcomeScreen {
     this.maxScroll       = 0;
     this.settingsBtnScale = 1.0;
 
-    
     this._particles = Array.from({ length: 22 }, (_, i) => ({
       x:    (i * 137.508) % 1,
       y:    (i * 97.31)   % 1,
@@ -27,12 +26,14 @@ class WelcomeScreen {
     if (this._lastW === width && this._lastH === height) return;
 
     const base = min(width, height);
-    const aboutContentHeight = 2000;
+    // Increased virtual canvas size to accommodate taller cards and larger text
+    const aboutContentHeight = 2500; 
 
     this.layout = {
       titleSize:    constrain(base * 0.09, 38, 72),
       subtitleSize: constrain(base * 0.05, 22, 40),
-      bodySize:     constrain(base * 0.024, 14, 19),
+      // BUMPED body text base size for readability
+      bodySize:     constrain(base * 0.026, 16, 22), 
       btnW:  constrain(width * 0.28, 190, 310),
       btnH:  constrain(height * 0.09, 52, 66),
       btnY:  height * 0.75,
@@ -94,7 +95,6 @@ class WelcomeScreen {
     pop();
   }
 
-
   _drawSparkles(startY, endY) {
     push();
     noStroke();
@@ -121,7 +121,6 @@ class WelcomeScreen {
     endShape(CLOSE);
   }
 
-  
   _drawCloudPuff(cx, cy, w, h, col) {
     push();
     noStroke();
@@ -158,77 +157,72 @@ class WelcomeScreen {
       width / 2, L.infoY
     );
     pop();
+    
+    // Character logic
     const floatY  = sin(frameCount * 0.05) * 9; 
-  const breath  = sin(frameCount * 0.08) * (L.bluSize * 0.03);
-  const armSwing = sin(frameCount * 0.1) * 12; 
+    const breath  = sin(frameCount * 0.08) * (L.bluSize * 0.03);
+    const armSwing = sin(frameCount * 0.1) * 12; 
   
-  const bluSize = L.bluSize;
+    const bluSize = L.bluSize;
   
-  push();
-  
-  translate(width / 2, L.bluY + floatY);
+    push();
+    translate(width / 2, L.bluY + floatY);
 
-  
-  for (let g = 3; g > 0; g--) {
+    for (let g = 3; g > 0; g--) {
+      noStroke();
+      fill(100, 160, 255, 18 * g);
+      circle(0, 0, bluSize + g * 18);
+    }
+
+    fill(PALETTE?.blue || color(80, 160, 255));
     noStroke();
-    fill(100, 160, 255, 18 * g);
-    circle(0, 0, bluSize + g * 18);
-  }
+    
+    push();
+    translate(-bluSize * 0.45, 0); 
+    rotate(radians(armSwing - 20)); 
+    ellipse(-bluSize * 0.1, 0, bluSize * 0.25, bluSize * 0.12);
+    pop();
+    
+    push();
+    translate(bluSize * 0.45, 0); 
+    rotate(radians(-armSwing + 20)); 
+    ellipse(bluSize * 0.1, 0, bluSize * 0.25, bluSize * 0.12);
+    pop();
 
+    rectMode(CENTER);
+    rect(0, 0, bluSize + breath, bluSize - breath, bluSize * 0.4);
 
-  fill(PALETTE?.blue || color(80, 160, 255));
-  noStroke();
-  push();
-  translate(-bluSize * 0.45, 0); 
-  rotate(radians(armSwing - 20)); 
-  ellipse(-bluSize * 0.1, 0, bluSize * 0.25, bluSize * 0.12);
-  pop();
-  push();
-  translate(bluSize * 0.45, 0); 
-  rotate(radians(-armSwing + 20)); 
-  ellipse(bluSize * 0.1, 0, bluSize * 0.25, bluSize * 0.12);
-  pop();
+    fill(255, 160, 180, 140);
+    ellipse(-bluSize * 0.28, bluSize * 0.1, bluSize * 0.22, bluSize * 0.14);
+    ellipse( bluSize * 0.28, bluSize * 0.1, bluSize * 0.22, bluSize * 0.14);
 
-  rectMode(CENTER);
-  rect(0, 0, bluSize + breath, bluSize - breath, bluSize * 0.4);
+    fill(255); 
+    ellipse(-bluSize * 0.18, -bluSize * 0.1, bluSize * 0.35, bluSize * 0.35);
+    ellipse( bluSize * 0.18, -bluSize * 0.1, bluSize * 0.35, bluSize * 0.35);
+    
+    fill(30); 
+    ellipse(-bluSize * 0.18, -bluSize * 0.1, bluSize * 0.18, bluSize * 0.18);
+    ellipse( bluSize * 0.18, -bluSize * 0.1, bluSize * 0.18, bluSize * 0.18);
+    
+    fill(255);
+    ellipse(-bluSize * 0.13, -bluSize * 0.14, bluSize * 0.08, bluSize * 0.08);
+    ellipse( bluSize * 0.23, -bluSize * 0.14, bluSize * 0.08, bluSize * 0.08);
+    ellipse(-bluSize * 0.22, -bluSize * 0.06, bluSize * 0.03, bluSize * 0.03);
+    ellipse( bluSize * 0.14, -bluSize * 0.06, bluSize * 0.03, bluSize * 0.03);
 
-  fill(255, 160, 180, 140);
-  ellipse(-bluSize * 0.28, bluSize * 0.1, bluSize * 0.22, bluSize * 0.14);
-  ellipse( bluSize * 0.28, bluSize * 0.1, bluSize * 0.22, bluSize * 0.14);
+    noFill();
+    stroke(30);
+    strokeWeight(max(2, bluSize * 0.035));
+    arc(0, bluSize * 0.12 - (breath * 0.5), bluSize * 0.26, bluSize * 0.16, 0, PI);
 
-  fill(255); 
-  ellipse(-bluSize * 0.18, -bluSize * 0.1, bluSize * 0.35, bluSize * 0.35);
-  ellipse( bluSize * 0.18, -bluSize * 0.1, bluSize * 0.35, bluSize * 0.35);
-  
-  fill(30); 
-  ellipse(-bluSize * 0.18, -bluSize * 0.1, bluSize * 0.18, bluSize * 0.18);
-  ellipse( bluSize * 0.18, -bluSize * 0.1, bluSize * 0.18, bluSize * 0.18);
-  
-  
-  fill(255);
-  ellipse(-bluSize * 0.13, -bluSize * 0.14, bluSize * 0.08, bluSize * 0.08);
-  ellipse( bluSize * 0.23, -bluSize * 0.14, bluSize * 0.08, bluSize * 0.08);
-  
-  ellipse(-bluSize * 0.22, -bluSize * 0.06, bluSize * 0.03, bluSize * 0.03);
-  ellipse( bluSize * 0.14, -bluSize * 0.06, bluSize * 0.03, bluSize * 0.03);
+    noStroke();
+    fill(255, 220, 60);
+    this._drawStar(-bluSize * 0.42 - (breath*0.5), -bluSize * 0.38 + (breath*0.5), 4, 8, 5);
+    
+    pop(); 
 
-  
-  noFill();
-  stroke(30);
-  strokeWeight(max(2, bluSize * 0.035));
-  
-  arc(0, bluSize * 0.12 - (breath * 0.5), bluSize * 0.26, bluSize * 0.16, 0, PI);
-
- 
-  noStroke();
-  fill(255, 220, 60);
-
-  this._drawStar(-bluSize * 0.42 - (breath*0.5), -bluSize * 0.38 + (breath*0.5), 4, 8, 5);
-  
-  pop(); 
-
-  this.drawStartButton(L.btnY, "startBtnHover");
-  this._drawScrollIndicator();
+    this.drawStartButton(L.btnY, "startBtnHover");
+    this._drawScrollIndicator();
   }
 
   _drawScrollIndicator() {
@@ -237,16 +231,16 @@ class WelcomeScreen {
     const iy      = height * 0.92 + bounceY;
     fill(160);
     noStroke();
-    textSize(this.layout.bodySize * 0.72);
+    textSize(this.layout.bodySize * 0.75); // Scaled up gently
     textAlign(CENTER, CENTER);
-    text("scroll to learn more", width / 2, iy - 14);
+    text("scroll to learn more", width / 2, iy - 16);
     stroke(180);
     strokeWeight(2.5);
     noFill();
     beginShape();
-    vertex(width / 2 - 9,  iy + 4);
-    vertex(width / 2,      iy + 13);
-    vertex(width / 2 + 9,  iy + 4);
+    vertex(width / 2 - 10,  iy + 4);
+    vertex(width / 2,       iy + 14);
+    vertex(width / 2 + 10,  iy + 4);
     endShape();
     pop();
   }
@@ -256,6 +250,7 @@ class WelcomeScreen {
     const cx  = width / 2;
     const mW  = min(width * 0.88, 680);   
     const pad = 28;                        
+    
     push();
     noStroke();
     fill(252, 248, 255);
@@ -267,23 +262,24 @@ class WelcomeScreen {
 
     let y = L.aboutStartY + 70;
     y = this._drawSectionHeader(cx, y, "Inside Wonderland", "Your brain-training adventure starts here ✨");
-    y += 18;
+    y += 24; // Increased spacing
     y = this._drawHowItWorks(cx, mW, y);
-    y += 30;
+    y += 40; // Increased spacing
     y = this._drawWaveDivider(cx, y);
-    y += 30;
+    y += 40; // Increased spacing
     y = this._drawSectionHeader(cx, y, "🎮 The Three Games", "Each game trains a different part of your memory");
-    y += 14;
+    y += 20; // Increased spacing
     y = this._drawGameCards(cx, mW, pad, y);
-    y += 30;
+    y += 40; // Increased spacing
     y = this._drawWaveDivider(cx, y);
-    y += 30;
+    y += 40; // Increased spacing
     y = this._drawSectionHeader(cx, y, "📈 Scoring & Progression", "How stars, streaks, and your brain profile work");
-    y += 14;
+    y += 20; // Increased spacing
     y = this._drawScoringRules(cx, mW, pad, y);
-    y += 30;
+    y += 40; // Increased spacing
     y = this._drawControlsCard(cx, mW, pad, y);
-    y += 50;
+    y += 60; // Increased spacing
+    
     this.layout.bottomBtnY = y;
     this.drawStartButton(y, "bottomBtnHover");
   }
@@ -293,19 +289,22 @@ class WelcomeScreen {
     push();
     textAlign(CENTER, CENTER);
 
-    this._drawCloudPuff(cx, y + 18, 300, 52, color(240, 232, 255, 140));
+    // Cloud puff scaled up
+    this._drawCloudPuff(cx, y + 20, 360, 64, color(240, 232, 255, 140));
 
     fill(PALETTE?.purple || color(120, 60, 200));
-    textSize(constrain(L.titleSize * 0.52, 20, 30));
+    // Header scaled up
+    textSize(constrain(L.titleSize * 0.6, 24, 36)); 
     textStyle(BOLD);
-    text(title, cx, y + 18);
+    text(title, cx, y + 20);
 
     fill(140);
     textStyle(NORMAL);
-    textSize(L.bodySize);
-    text(sub, cx, y + 60);
+    textSize(L.bodySize); // Uses the new, larger bodySize
+    text(sub, cx, y + 68); // Pushed down to clear the larger title
     pop();
-    return y + 80;
+    
+    return y + 100; // Increased bounding box height
   }
 
   _drawWaveDivider(cx, y) {
@@ -326,14 +325,14 @@ class WelcomeScreen {
 
   _drawHowItWorks(cx, mW, startY) {
     const steps = [
-      { icon: "🧩", label: "Pick a Game",         sub: "Choose from 3 mini-games" },
+      { icon: "🧩", label: "Pick a Game",        sub: "Choose from 3 mini-games" },
       { icon: "🎯", label: "Complete Challenges",   sub: "Follow Blu's instructions" },
       { icon: "🧠", label: "Train Your Brain",      sub: "Watch your profile grow" },
     ];
 
     const spacing = min(mW / 3, 210);
     const cardW   = spacing - 16;
-    const cardH   = 140;
+    const cardH   = 170; // BUMPED from 140 to fit bigger text
     const baseX   = cx - spacing;          
     const y       = startY + cardH / 2;
 
@@ -349,26 +348,27 @@ class WelcomeScreen {
       rectMode(CENTER);
       rect(icx, icy, cardW, cardH, 22);
       drawingContext.shadowBlur = 0;
+      
       fill(245, 238, 255);
-      circle(icx, icy - 20, 52);
+      circle(icx, icy - 24, 60); // BUMPED Circle
 
       textAlign(CENTER, CENTER);
-      textSize(24);
-      text(steps[i].icon, icx, icy - 20);
+      textSize(28); // BUMPED icon
+      text(steps[i].icon, icx, icy - 24);
 
       fill(55);
       textStyle(BOLD);
-      textSize(14);
-      text(steps[i].label, icx, icy + 16);
+      textSize(16); // BUMPED label
+      text(steps[i].label, icx, icy + 22); // Pushed down
 
       fill(140);
       textStyle(NORMAL);
-      textSize(12);
-      text(steps[i].sub, icx, icy + 35);
+      textSize(14); // BUMPED sub
+      text(steps[i].sub, icx, icy + 45); // Pushed down
       pop();
     }
 
-    return startY + cardH + 20;
+    return startY + cardH + 30; // BUMPED spacing
   }
 
   _drawGameCards(cx, mW, pad, startY) {
@@ -399,8 +399,8 @@ class WelcomeScreen {
       },
     ];
 
-    const cardH   = 148;
-    const cardGap = 20;
+    const cardH   = 170; // BUMPED from 148
+    const cardGap = 25; // BUMPED from 20
     let y = startY;
 
     for (const g of games) {
@@ -417,43 +417,46 @@ class WelcomeScreen {
       rect(cx - mW / 2, y + 14, 5, cardH - 28, 3);
 
       const cardLeft = cx - mW / 2;
-      const iconCX   = cardLeft + pad + 26; 
+      const iconCX   = cardLeft + pad + 30; // Shifted slightly for larger circle
       const iconCY   = y + cardH / 2;
       
-      const textX    = iconCX + 42;         
+      const textX    = iconCX + 48;         
       const textW    = mW - (textX - cardLeft) - pad; 
+      
       fill(255, 200);
-      circle(iconCX, iconCY, 52);
+      circle(iconCX, iconCY, 60); // BUMPED from 52
       textAlign(CENTER, CENTER);
-      textSize(26);
+      textSize(30); // BUMPED from 26
       text(g.icon, iconCX, iconCY);
+      
       fill(45);
       textStyle(BOLD);
-      textSize(17);
+      textSize(19); // BUMPED from 17
       textAlign(LEFT, TOP);
       rectMode(CORNER); 
-      text(g.title, textX, y + 20);
+      text(g.title, textX, y + 24); // Pushed down
+      
       fill(100);
       textStyle(NORMAL);
-      textSize(13);
-      text(g.desc, textX, y + 44, textW);
+      textSize(15); // BUMPED from 13
+      text(g.desc, textX, y + 52, textW); // Pushed down
 
-
-      const pillY = y + cardH - 44;
-      const pillW = min(textWidth(g.tags) + 24, textW);
+      const pillY = y + cardH - 50; // Pushed up slightly relative to bottom
+      const pillW = min(textWidth(g.tags) + 30, textW); // Wider pill for bigger text
       fill(red(g.accent), green(g.accent), blue(g.accent), 60);
-      rect(textX, pillY, pillW, 24, 12);
+      rect(textX, pillY, pillW, 28, 14); // BUMPED height
+      
       fill(red(g.accent) * 0.55, green(g.accent) * 0.55, blue(g.accent) * 0.55);
       textStyle(BOLD);
-      textSize(11);
+      textSize(13); // BUMPED from 11
       textAlign(LEFT, CENTER);
-      text(g.tags, textX + 12, pillY + 12);
+      text(g.tags, textX + 15, pillY + 14);
 
       fill(150);
       textStyle(NORMAL);
-      textSize(11);
+      textSize(13); // BUMPED from 11
       textAlign(RIGHT, CENTER);
-      text(g.diff, cx + mW / 2 - pad, pillY + 12);
+      text(g.diff, cx + mW / 2 - pad, pillY + 14);
 
       pop();
       y += cardH + cardGap;
@@ -470,8 +473,7 @@ class WelcomeScreen {
       { icon: "👑", title: "Rank Up",           desc: "Collect total Stars to level up: Newbie → Explorer → Memory Master. Show off your rank badge!" },
     ];
 
-
-    const rowH   = 96; 
+    const rowH   = 116;  // BUMPED from 96
     const cardH  = rules.length * rowH; 
     const cardCY = startY + cardH / 2;
     push();
@@ -493,7 +495,6 @@ class WelcomeScreen {
       const rcy = ry + rowH / 2;
 
       push();
- 
       if (i % 2 === 0) {
         noStroke();
         fill(248, 244, 255);
@@ -507,31 +508,28 @@ class WelcomeScreen {
         }
       }
 
-
-      const ibCX = leftX + 24;
+      const ibCX = leftX + 28; // Shifted right for bigger circle
       fill(240, 230, 255);
       noStroke();
-      circle(ibCX, rcy, 46); 
+      circle(ibCX, rcy, 54); // BUMPED from 46
       textAlign(CENTER, CENTER);
-      textSize(20);
+      textSize(24); // BUMPED from 20
       text(r.icon, ibCX, rcy);
 
-      const txX = leftX + 64; 
-      const txW = rightW - 64;
+      const txX = leftX + 76; // Shifted right to clear bigger circle
+      const txW = rightW - 76;
 
       fill(50);
       textStyle(BOLD);
-      textSize(15);
+      textSize(17); // BUMPED from 15
       textAlign(LEFT, TOP);
       rectMode(CORNER); 
-      
-
-      text(r.title, txX, ry + 22);
+      text(r.title, txX, ry + 26); // Pushed down
 
       fill(115);
       textStyle(NORMAL);
-      textSize(13);
-      text(r.desc, txX, ry + 46, txW);
+      textSize(15); // BUMPED from 13
+      text(r.desc, txX, ry + 52, txW); // Pushed down
       pop();
     }
 
@@ -539,7 +537,7 @@ class WelcomeScreen {
   }
 
   _drawControlsCard(cx, mW, pad, startY) {
-    const cardH = 90;
+    const cardH = 110; // BUMPED from 90
     const cardCY = startY + cardH / 2;
 
     push();
@@ -554,20 +552,20 @@ class WelcomeScreen {
     textAlign(CENTER, CENTER);
     fill(70, 130, 200);
     textStyle(BOLD);
-    textSize(15);
-    text("🎮  Controls Guide", cx, cardCY - 16);
+    textSize(18); // BUMPED from 15
+    text("🎮  Controls Guide", cx, cardCY - 20); // Pushed up
 
     fill(110);
     textStyle(NORMAL);
-    textSize(13);
-    text("🖱️ Click or Tap  •  👀 Follow on-screen prompts  •  🔊 Listen for audio cues", cx, cardCY + 14);
+    textSize(15); // BUMPED from 13
+    text("🖱️ Click or Tap  •  👀 Follow on-screen prompts  •  🔊 Listen for audio cues", cx, cardCY + 18); // Pushed down
     pop();
 
     return startY + cardH;
   }
 
   _settingsBtnBounds() {
-    const size = 48;
+    const size = 54; // Scaled up settings button slightly
     return {
       x: width - max(40, width * 0.05) - size / 2,
       y: max(40, height * 0.06) - size / 2,
@@ -590,11 +588,11 @@ class WelcomeScreen {
     drawingContext.shadowBlur  = hover ? 18 : 6;
     drawingContext.shadowColor = "rgba(150,100,255,0.25)";
     fill(hover ? color(240, 232, 255) : 255);
-    circle(0, 0, 48);
+    circle(0, 0, 54); // Match new size
     drawingContext.shadowBlur = 0;
     fill(hover ? (PALETTE?.purple || color(120, 60, 200)) : 120);
     textAlign(CENTER, CENTER);
-    textSize(20);
+    textSize(24); // Bigger cog icon
     textStyle(BOLD);
     text("⚙", 0, 1);
     pop();
@@ -665,15 +663,18 @@ class WelcomeScreen {
     const btnX = width / 2 - btnW / 2;
     const vmY  = mouseY + this.scrollOffset;
     const s = this._settingsBtnBounds();
+    
     if (mouseX > s.x && mouseX < s.x + s.w && mouseY > s.y && mouseY < s.y + s.h) {
       if (typeof audioManager !== "undefined") audioManager.playSound("petal");
       gameState.setScreen(GAME_STATES.SETTINGS);
       return true;
     }
+    
     if (mouseX > btnX && mouseX < btnX + btnW && vmY > L.btnY && vmY < L.btnY + btnH) {
       this._triggerGameStart();
       return true;
     }
+    
     if (L.bottomBtnY && mouseX > btnX && mouseX < btnX + btnW && vmY > L.bottomBtnY && vmY < L.bottomBtnY + btnH) {
       this._triggerGameStart();
       return true;
