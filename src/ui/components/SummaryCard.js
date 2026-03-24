@@ -117,9 +117,9 @@ class SummaryCard {
         rectMode(CENTER);
         rect(0, 0, metrics.cardW, metrics.cardH, 25);
         rectMode(CORNER);
-        drawingContext.shadowBlur = 0; // Reset shadows
+        drawingContext.shadowBlur = 0; 
 
-        // 2. Headers
+        
         textAlign(CENTER, CENTER);
         fill(PALETTE?.purple || "#9B5DE5");
         textStyle(BOLD);
@@ -137,7 +137,7 @@ class SummaryCard {
         strokeCap(ROUND);
         line(-metrics.lineHalf, metrics.dividerTopY, metrics.lineHalf, metrics.dividerTopY);
 
-        // Stat Rows (with cute icons)
+        // Stat Rows 
         const recordKey = this.gameKey + "Record";
         const record = (typeof starBank !== 'undefined') ? (starBank[recordKey] || 0) : 0;
         const isNewRecord = record > 0 && this.sessionScore >= record;
@@ -166,6 +166,7 @@ class SummaryCard {
         rectMode(CORNER);
         
         fill(60);
+        textAlign(CENTER, CENTER);
         textStyle(BOLD);
         textSize(16);
         text(typeof starBank !== 'undefined' ? starBank.getLevel() : "Level 1", 0, badgeY + 1);
@@ -187,6 +188,7 @@ class SummaryCard {
         rectMode(CENTER);
         rect(0, 0, metrics.btnW, metrics.btnH, 25);
         drawingContext.shadowBlur = 0;
+        textAlign(CENTER, CENTER);
         fill(h1 ? 255 : 250);
         textSize(15);
         textStyle(BOLD);
@@ -203,6 +205,7 @@ class SummaryCard {
         rectMode(CENTER);
         rect(0, 0, metrics.btnW, metrics.btnH, 25);
         drawingContext.shadowBlur = 0;
+        textAlign(CENTER, CENTER);
         fill(100);
         textSize(15);
         textStyle(BOLD);

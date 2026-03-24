@@ -7,6 +7,7 @@ class GameScreen {
     this.summaryCard    = null;
     this._scoreReported = false;
     this.showExitConfirm = false;
+    this._sessionStarsStart = 0;
 
     this.backBtnScale = 1.0;
 
@@ -32,13 +33,13 @@ class GameScreen {
     if (!this.game) this._createGameInstance();
     if (!this.game) return;
 
-    if (typeof starBank !== 'undefined' && starBank.resetSession) {
-      starBank.resetSession();
-    }
-
     if (this.gameType === "GAME_A" && this.game.restartGame) this.game.restartGame();
     else if (this.gameType === "GAME_B" && this.game.startGame) this.game.startGame();
     else if (this.gameType === "GAME_C" && this.game.restartGame) this.game.restartGame();
+
+    if (typeof starBank !== 'undefined' && typeof starBank.totalStars === 'number') {
+      this._sessionStarsStart = starBank.totalStars;
+    }
   }
 
   prepareForEntry() {
@@ -86,8 +87,12 @@ class GameScreen {
       try {
         let starsEarned = sessionScore;
         if (typeof starBank !== 'undefined') {
-          starsEarned = starBank.addStarsFromSession(sessionScore, maxLevel, livesLost, gameKey);
-          starBank.updateRecord(gameKey, sessionScore);
+          starBank.addStarsFromSession(sessionScore, maxLevel, livesLost, gameKey);
+          if (starBank.updateStats) starBank.updateStats(gameKey, sessionScore);
+          const cap = (starBank.COGNITIVE_CAP && starBank.COGNITIVE_CAP[gameKey]) ? starBank.COGNITIVE_CAP[gameKey] : sessionScore;
+          starBank.updateRecord(gameKey, min(sessionScore, cap));
+
+          starsEarned = max(0, starBank.totalStars - this._sessionStarsStart);
         }
         this.summaryCard = new SummaryCard(gameKey, sessionScore, starsEarned);
         this._scoreReported = true;

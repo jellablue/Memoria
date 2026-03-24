@@ -51,6 +51,15 @@ class SettingsScreen {
     };
   }
 
+  _resetBtnBounds() {
+    return {
+      x: this.layout.cx - (this.layout.cardW * 0.28),
+      y: this.layout.cy + this.layout.cardH * 0.32,
+      w: this.layout.cardW * 0.56,
+      h: 46,
+    };
+  }
+
   _isInside(x, y, b) {
     return x >= b.x && x <= b.x + b.w && y >= b.y && y <= b.y + b.h;
   }
@@ -184,6 +193,26 @@ class SettingsScreen {
     this._drawToggle("sfx", "🔊 Sound Effects", settings.sfxEnabled);
     this._drawSlider("sfx", settings.sfxVolume);
 
+    const resetBtn = this._resetBtnBounds();
+    const resetHover = this._isInside(mouseX, mouseY, resetBtn);
+
+    fill(resetHover ? "#F4B6B0" : "#F8D8D4");
+    rectMode(CORNER);
+    rect(resetBtn.x, resetBtn.y, resetBtn.w, resetBtn.h, 14);
+
+    fill(110);
+    textAlign(CENTER, CENTER);
+    textStyle(BOLD);
+    textSize(16);
+    text("Reset Brain Stats", resetBtn.x + resetBtn.w / 2, resetBtn.y + resetBtn.h / 2 + 1);
+
+    fill(140);
+    textStyle(NORMAL);
+    textSize(12);
+    text("Clears profile peaks, averages, and consistency data", this.layout.cx, resetBtn.y + resetBtn.h + 18);
+
+    if (resetHover) cursor(HAND);
+
     pop();
 
     this.drawBackButton();
@@ -256,6 +285,15 @@ class SettingsScreen {
 
     const bgmSlider = this._sliderBounds("bgm");
     const sfxSlider = this._sliderBounds("sfx");
+    const resetBtn = this._resetBtnBounds();
+
+    if (this._isInside(mouseX, mouseY, resetBtn)) {
+      if (typeof starBank !== "undefined" && starBank.resetBrainStats) {
+        starBank.resetBrainStats();
+      }
+      if (typeof audioManager !== "undefined") audioManager.playSound("petal");
+      return true;
+    }
 
     if (this._isInside(mouseX, mouseY, { x: bgmSlider.x, y: bgmSlider.y - 15, w: bgmSlider.w, h: bgmSlider.h + 30 })) {
       this._dragging = "bgm";

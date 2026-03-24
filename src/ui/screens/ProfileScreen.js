@@ -1,4 +1,3 @@
-
 class ProfileScreen {
   constructor() {
     this.animT = 0;
@@ -20,23 +19,40 @@ class ProfileScreen {
     this.targetScroll = 0;
   }
 
- _syncLayout() {
+  _syncLayout() {
     if (this._lastW === width && this._lastH === height) return;
 
     const isNarrow = width < 768;
     const cx = width / 2;
     const headerY = 80;
-    const radarCardY = headerY + 350;
-    const radarRadius = min(150, width * 0.2);
-    const summaryHeaderY = radarCardY + radarRadius + 180;
-    const summaryCardsStartY = summaryHeaderY + 40;
+
+    // --- THE VISUAL BOUNDING BOX FIX ---
+    const radarRadius = min(120, width * 0.22);
+    const LD = radarRadius + 55; // Distance to the labels
+    
+    // We calculate a 25% shift based on the height of the radar's bounding box
+    // This perfectly corrects the "top-heavy" triangle shape
+    const visualOffset = 0.25 * LD; 
+
+    const cardH = radarRadius * 3.2; 
+    // Safely position the center of the white card well below the header
+    const radarCardY = headerY + 100 + cardH / 2; 
+    // Shift the actual drawing origin of the radar graph downward inside the card
+    const radarCY = radarCardY + visualOffset; 
+
+    const summaryHeaderY = radarCardY + cardH / 2 + 50;
+    const summaryCardsStartY = summaryHeaderY + 50;
     const cardW = min(width * 0.9, 700);
-    const totalVirtualHeight = summaryCardsStartY + (3 * 95) + 120;
+
+    const metricH = 170;
+    const metricGap = 20;
+    const totalVirtualHeight = summaryCardsStartY + (3 * metricH) + (2 * metricGap) + 120;
 
     this.layout = {
       cx, isNarrow, cardW,
-      headerY, radarCardY, radarRadius,
+      headerY, radarCardY, radarCY, radarRadius, cardH, // We now pass radarCY to the renderer
       summaryHeaderY, summaryCardsStartY,
+      metricH, metricGap,
       totalVirtualHeight
     };
 
@@ -54,9 +70,8 @@ class ProfileScreen {
   draw() {
     this._syncLayout();
 
-
-    background(245, 248, 255);
-
+    // 1. Unified Wonderland Background (Airy Daydream)
+    this._drawDynamicBackground();
 
     this.scrollOffset = lerp(this.scrollOffset, this.targetScroll, 0.1);
     this.animT = lerp(this.animT, 1.0, 0.08);
@@ -74,171 +89,270 @@ class ProfileScreen {
     this.drawScrollbar();
   }
 
+  // Soft, floating ambient background
+  _drawDynamicBackground() {
+    push();
+    fill(245, 248, 255); 
+    noStroke();
+    rectMode(CORNER);
+    rect(0, 0, width, height);
+
+    // Procedural ambient orbs (lightweight version for the profile screen)
+    fill(200, 210, 240, 80);
+    for(let i = 0; i < 5; i++) {
+      let x = (width * 0.2 * i) + sin(frameCount * 0.005 + i) * 100;
+      let y = (height * 0.3 * i) + cos(frameCount * 0.006 + i) * 100;
+      circle(x % width, y % height, 150 + sin(frameCount*0.01)*50);
+    }
+    pop();
+  }
+
   _drawHeader() {
     const { cx, headerY } = this.layout;
 
     push();
+    // Glassmorphism Title Plate
+    drawingContext.shadowBlur = 15;
+    drawingContext.shadowColor = "rgba(0,0,0,0.05)";
+    fill(255, 200);
+    stroke(255);
+    strokeWeight(2);
+    rectMode(CENTER);
+    rect(cx, headerY + 10, min(width * 0.8, 500), 80, 25);
+    drawingContext.shadowBlur = 0;
+    noStroke();
+
     fill(PALETTE?.purple || "#9B5DE5");
     textAlign(CENTER, CENTER);
-    textSize(constrain(width * 0.045, 28, 40));
+    textSize(constrain(width * 0.045, 24, 32));
     textStyle(BOLD);
-    text("\uD83E\uDDE0 Your Brain Profile", cx, headerY);
+    text("\uD83E\uDDE0 Your Brain Profile", cx, headerY - 5);
 
     fill(120);
-    textSize(constrain(width * 0.025, 14, 18));
+    textSize(constrain(width * 0.025, 13, 16));
     textStyle(NORMAL);
-    text("Cognitive capacity mapped from your best performances", cx, headerY + 40);
+    text("Cognitive profile from peak and average performance", cx, headerY + 22);
     pop();
   }
 
   _drawRadarCard() {
-    const { cx, radarCardY, radarRadius, cardW } = this.layout;
-    const cardH = radarRadius * 3.6;
+    const { cx, radarCardY, radarCY, radarRadius, cardW, cardH } = this.layout;
 
     push();
     rectMode(CENTER);
     drawingContext.shadowBlur = 25;
-    drawingContext.shadowColor = "rgba(0,0,0,0.06)";
-    fill(255);
-    noStroke();
+    drawingContext.shadowColor = "rgba(0,0,0,0.08)";
+    fill(255, 230); 
+    stroke(255);
+    strokeWeight(3);
+    
     rect(cx, radarCardY, cardW, cardH, 25);
     drawingContext.shadowBlur = 0;
     pop();
 
-    this._drawGrid(cx, radarCardY, radarRadius);
-    this._drawAxes(cx, radarCardY, radarRadius);
-    this._drawPlayerShape(cx, radarCardY, radarRadius);
-    this._drawLabels(cx, radarCardY, radarRadius);
+    this._drawGrid(cx, radarCY, radarRadius);
+    this._drawAxes(cx, radarCY, radarRadius);
+    this._drawPlayerShape(cx, radarCY, radarRadius);
+    this._drawLabels(cx, radarCY, radarRadius);
   }
 
   _drawMetricCards() {
-    const { cx, summaryHeaderY, summaryCardsStartY, cardW } = this.layout;
+    const { cx, summaryHeaderY, summaryCardsStartY, cardW, metricH, metricGap } = this.layout;
     const scores = (typeof starBank !== 'undefined')
       ? starBank.getCognitiveScores()
       : {
-          visual: 0,
-          auditory: 0,
-          spatial: 0,
-          sessionVisual: 0,
-          sessionAuditory: 0,
-          sessionSpatial: 0,
+          visual: 0, auditory: 0, spatial: 0,
+          sessionVisual: 0, sessionAuditory: 0, sessionSpatial: 0,
+          details: {
+            kaleido: { finalScore: 0, levelLabel: "Developing", peakPct: 0, avgPct: 0, consistencyLabel: "Low", tagline: "" },
+            jelly: { finalScore: 0, levelLabel: "Developing", peakPct: 0, avgPct: 0, consistencyLabel: "Low", tagline: "" },
+            tiptoe: { finalScore: 0, levelLabel: "Developing", peakPct: 0, avgPct: 0, consistencyLabel: "Low", tagline: "" },
+          },
         };
 
+    // Subheader
     push();
-    fill(150);
-    textSize(13);
+    fill(130);
+    textSize(14);
     textStyle(BOLD);
     textAlign(LEFT, CENTER);
     noStroke();
-    text("DETAILED COGNITIVE BREAKDOWN", cx - cardW/2 + 10, summaryHeaderY);
+    let leftEdge = cx - cardW/2;
+    text("DETAILED COGNITIVE BREAKDOWN", leftEdge + 15, summaryHeaderY);
 
     stroke(220);
     strokeWeight(2);
     strokeCap(ROUND);
-    line(cx - cardW/2 + 10, summaryHeaderY + 15, cx + cardW/2 - 10, summaryHeaderY + 15);
+    line(leftEdge + 15, summaryHeaderY + 20, cx + cardW/2 - 15, summaryHeaderY + 20);
     pop();
 
     const metrics = [
-      {
-        icon: "\uD83C\uDF38",
-        game: "Kaleido-Pop",
-        gameKey: "kaleido",
-        faculty: "Visual Binding",
-        color: PALETTE?.pink || "#FFB7B2",
-        score: scores.visual,
-        sessionScore: scores.sessionVisual,
-      },
-      {
-        icon: "\uD83C\uDFB5",
-        game: "Jelly Jams",
-        gameKey: "jelly",
-        faculty: "Audio Sequencing",
-        color: PALETTE?.blue || "#B5CDF5",
-        score: scores.auditory,
-        sessionScore: scores.sessionAuditory,
-      },
-      {
-        icon: "\uD83D\uDC63",
-        game: "Tiptoe Trails",
-        gameKey: "tiptoe",
-        faculty: "Spatial Mapping",
-        color: PALETTE?.green || "#A0EACD",
-        score: scores.spatial,
-        sessionScore: scores.sessionSpatial,
-      },
+      { icon: "\uD83C\uDF38", game: "Kaleido-Pop", gameKey: "kaleido", faculty: "Visual Binding", color: PALETTE?.pink || "#FFB7B2", score: scores.visual, sessionScore: scores.sessionVisual, detail: scores.details?.kaleido },
+      { icon: "\uD83C\uDFB5", game: "Jelly Jams", gameKey: "jelly", faculty: "Audio Sequencing", color: PALETTE?.blue || "#B5CDF5", score: scores.auditory, sessionScore: scores.sessionAuditory, detail: scores.details?.jelly },
+      { icon: "\uD83D\uDC63", game: "Tiptoe Trails", gameKey: "tiptoe", faculty: "Spatial Mapping", color: PALETTE?.green || "#A0EACD", score: scores.spatial, sessionScore: scores.sessionSpatial, detail: scores.details?.tiptoe },
     ];
-
-    const metricH = 80;
-    const metricGap = 15;
 
     for (let i = 0; i < metrics.length; i++) {
       const m = metrics[i];
       const cardY = summaryCardsStartY + i * (metricH + metricGap);
-      const leftX = cx - cardW/2;
-
+      
       push();
-      fill(255);
-      drawingContext.shadowBlur = 15;
-      drawingContext.shadowColor = "rgba(0,0,0,0.04)";
-      noStroke();
+      // 1. Glassmorphism Card Base
+      fill(255, 230);
+      stroke(255);
+      strokeWeight(2);
+      drawingContext.shadowBlur = 20;
+      drawingContext.shadowColor = "rgba(0,0,0,0.06)";
       rectMode(CORNER);
-      rect(leftX, cardY, cardW, metricH, 16);
+      rect(leftEdge, cardY, cardW, metricH, 20);
       drawingContext.shadowBlur = 0;
+      noStroke();
 
-      fill(color(m.color).levels[0], color(m.color).levels[1], color(m.color).levels[2], 50);
-      circle(leftX + 40, cardY + metricH/2, 44);
+      // 2. Top Row: Icon, Titles, and Main Score
+      // Icon
+      let iconColor = color(m.color);
+      fill(red(iconColor), green(iconColor), blue(iconColor), 50);
+      circle(leftEdge + 45, cardY + 45, 50);
       fill(50);
       textAlign(CENTER, CENTER);
-      textSize(20);
-      text(m.icon, leftX + 40, cardY + metricH/2 + 2);
+      textSize(24);
+      text(m.icon, leftEdge + 45, cardY + 47);
 
+      // Titles
       fill(60);
-      textSize(18);
+      textSize(20);
       textStyle(BOLD);
-      textAlign(LEFT, BOTTOM);
-      text(m.faculty, leftX + 80, cardY + metricH/2 - 2);
+      textAlign(LEFT, CENTER);
+      text(m.faculty, leftEdge + 85, cardY + 35);
 
       fill(130);
+      textSize(14);
+      textStyle(NORMAL);
+      text("Trained in: " + m.game, leftEdge + 85, cardY + 58);
+
+      // Main Score (Right Aligned)
+      fill(m.color);
+      textSize(32);
+      textStyle(BOLD);
+      textAlign(RIGHT, CENTER);
+      text(round(m.score * this.animT) + "%", leftEdge + cardW - 30, cardY + 45);
+
+      // 3. Middle Row: Stats & Tagline
+      const detail = m.detail || { finalScore: m.score, levelLabel: "Developing", peakPct: m.score, avgPct: m.sessionScore, consistencyLabel: "Low", tagline: "" };
+      
+      fill(100);
       textSize(13);
       textStyle(NORMAL);
-      textAlign(LEFT, TOP);
-      text("Trained in: " + m.game, leftX + 80, cardY + metricH/2 + 4);
+      textAlign(LEFT, CENTER);
+      text(`Peak: ${round(detail.peakPct)}%   |   Avg: ${round(detail.avgPct)}%   |   ${detail.consistencyLabel} Consistency`, leftEdge + 35, cardY + 95);
+      
+      // 4. Bottom Row: Full-width Progress Bar
+      const barW = cardW - 70; // Responsive width
+      const barX = leftEdge + 35;
+      const barY = cardY + 125;
 
-      const barW = cardW * 0.3;
-      const barX = leftX + cardW - barW - 80;
-      const barY = cardY + metricH/2 - 6;
+      // Track background
+      fill(235);
+      rect(barX, barY, barW, 14, 7);
 
-      fill(240);
-      rect(barX, barY, barW, 12, 6);
+      // Average Session Fill (Faded)
+      fill(red(iconColor), green(iconColor), blue(iconColor), 90);
+      rect(barX, barY, barW * (m.sessionScore / 100) * this.animT, 14, 7);
 
-      const overlayColor = color(m.color);
-      fill(red(overlayColor), green(overlayColor), blue(overlayColor), 90);
-      rect(barX, barY, barW * (m.sessionScore / 100) * this.animT, 12, 6);
-
+      // Peak/Main Score Fill (Solid)
       fill(m.color);
-      rect(barX, barY, barW * (m.score / 100) * this.animT, 12, 6);
+      rect(barX, barY, barW * (m.score / 100) * this.animT, 14, 7);
 
-      const delta = (typeof starBank !== 'undefined' && starBank.getSessionDelta)
-        ? starBank.getSessionDelta(m.gameKey)
-        : null;
+      // 5. PB (Personal Best) Badge
+      const delta = (typeof starBank !== 'undefined' && starBank.getSessionDelta) ? starBank.getSessionDelta(m.gameKey) : null;
       if (delta) {
+        // Position badge relative to the end of the progress bar
+        let currentFillX = barX + (barW * (m.score / 100) * this.animT);
+        // Ensure badge doesn't fly off the card bounds
+        let badgeX = constrain(currentFillX, barX + 40, barX + barW - 40); 
+        
         fill(255, 240, 180);
-        rect(barX, barY - 24, 86, 18, 9);
+        rectMode(CENTER);
+        rect(badgeX, barY - 20, 70, 22, 11);
         fill(120, 90, 20);
         textSize(11);
         textStyle(BOLD);
-        textAlign(CENTER, CENTER);
-        text("PB " + delta, barX + 43, barY - 15);
+        text("PB " + delta, badgeX, barY - 19);
       }
-
-      fill(m.color);
-      textSize(22);
-      textStyle(BOLD);
-      textAlign(RIGHT, CENTER);
-      text(round(m.score * this.animT) + "%", leftX + cardW - 20, cardY + metricH/2);
-
       pop();
     }
+  }
+
+  // ... [Keep _drawGrid, _drawAxes, and _drawPlayerShape exactly as they are] ...
+
+  _drawLabels(cx, cy, R) {
+    const scores = (typeof starBank !== 'undefined') ? starBank.getCognitiveScores() : { visual: 0, auditory: 0, spatial: 0 };
+    const LD = R + 55; // Pushed slightly further out to prevent overlapping the radar
+
+    const data = [
+      { label: "VISUAL",   sub: "Binding",    score: scores.visual,   angle: -HALF_PI,                  color: PALETTE?.pink || "#FFB7B2" },
+      { label: "AUDITORY", sub: "Sequencing", score: scores.auditory, angle: (TWO_PI / 3) - HALF_PI,    color: PALETTE?.blue || "#B5CDF5" },
+      { label: "SPATIAL",  sub: "Mapping",    score: scores.spatial,  angle: (TWO_PI / 3) * 2 - HALF_PI,color: PALETTE?.green || "#A0EACD" },
+    ];
+
+    for (const d of data) {
+      const lx = cx + cos(d.angle) * LD;
+      const ly = cy + sin(d.angle) * LD;
+      
+      push();
+      noStroke();
+      
+      // Clean, unified pill badge backing
+      drawingContext.shadowBlur = 10;
+      drawingContext.shadowColor = "rgba(0,0,0,0.1)";
+      fill(255); 
+      rectMode(CENTER); 
+      rect(lx, ly, 110, 56, 15);
+      drawingContext.shadowBlur = 0;
+
+      // Color accent line at the top of the badge
+      fill(d.color);
+      rect(lx, ly - 26, 60, 4, 2);
+
+      // Text Alignment logic fixed
+      textAlign(CENTER, CENTER);
+      fill(60); 
+      textSize(12); 
+      textStyle(BOLD); 
+      text(d.label, lx, ly - 10);
+      
+      fill(140); 
+      textSize(10); 
+      textStyle(NORMAL);
+      text(d.sub, lx, ly + 2);
+      
+      fill(d.color); 
+      textSize(16); 
+      textStyle(BOLD);
+      text(round(d.score * this.animT) + "%", lx, ly + 18);
+      pop();
+    }
+  }
+
+  handleClick() {
+    let cx = max(40, width * 0.05);
+    let cy = max(40, height * 0.06);
+
+    if (dist(mouseX, mouseY, cx, cy) < 24) {
+      
+      if (typeof audioManager !== 'undefined') {
+        audioManager.playBackgroundMusic("menu");
+        audioManager.playSound("petal");
+      }
+  
+      gameState.setScreen(GAME_STATES.MENU);
+
+      this.scrollOffset = 0;
+      this.targetScroll = 0;
+      
+      return true;
+    }
+    return false; 
   }
 
   _drawGrid(cx, cy, R) {
@@ -320,32 +434,6 @@ class ProfileScreen {
     }
   }
 
-  _drawLabels(cx, cy, R) {
-    const scores = (typeof starBank !== 'undefined') ? starBank.getCognitiveScores() : { visual: 0, auditory: 0, spatial: 0 };
-    const LD = R + 40;
-
-    const data = [
-      { label: "VISUAL",   sub: "Binding",    score: scores.visual,   angle: -HALF_PI,                  color: PALETTE?.pink || "#FFB7B2" },
-      { label: "AUDITORY", sub: "Sequencing", score: scores.auditory, angle: (TWO_PI / 3) - HALF_PI,    color: PALETTE?.blue || "#B5CDF5" },
-      { label: "SPATIAL",  sub: "Mapping",    score: scores.spatial,  angle: (TWO_PI / 3) * 2 - HALF_PI,color: PALETTE?.green || "#A0EACD" },
-    ];
-
-    for (const d of data) {
-      const lx = cx + cos(d.angle) * LD;
-      const ly = cy + sin(d.angle) * LD;
-      push();
-      noStroke();
-      fill(d.color); rectMode(CENTER); rect(lx, ly - 18, 100, 24, 12);
-      fill(60); textSize(11); textStyle(BOLD); textAlign(CENTER, CENTER);
-      text(d.label, lx, ly - 18);
-      fill(140); textSize(11); textStyle(NORMAL);
-      text("(" + d.sub + ")", lx, ly);
-      fill(d.color); textSize(24); textStyle(BOLD);
-      text(round(d.score * this.animT) + "%", lx, ly + 26);
-      pop();
-    }
-  }
-
   drawScrollbar() {
     if (this.maxScroll <= 0) return;
 
@@ -396,19 +484,4 @@ class ProfileScreen {
     if (hover) cursor(HAND);
   }
 
-  handleClick() {
-    let cx = max(40, width * 0.05);
-    let cy = max(40, height * 0.06);
-
-    if (dist(mouseX, mouseY, cx, cy) < 24) {
-      if (typeof audioManager !== 'undefined') audioManager.playBackgroundMusic("menu");
-      gameState.setScreen(GAME_STATES.MENU);
-      if (typeof audioManager !== 'undefined') audioManager.playSound("petal");
-
-      this.scrollOffset = 0;
-      this.targetScroll = 0;
-      return true;
-    }
-    return false;
-  }
 }

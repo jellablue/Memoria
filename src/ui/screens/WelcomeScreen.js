@@ -170,54 +170,81 @@ class WelcomeScreen {
     pop();
 
     // Blu character
-    const floatY  = sin(frameCount * 0.05) * 9;
-    const bluSize = L.bluSize;
-    push();
-    translate(width / 2, L.bluY + floatY);
+    const floatY  = sin(frameCount * 0.05) * 9; 
+  const breath  = sin(frameCount * 0.08) * (L.bluSize * 0.03);
+  const armSwing = sin(frameCount * 0.1) * 12; 
+  
+  const bluSize = L.bluSize;
+  
+  push();
+  
+  translate(width / 2, L.bluY + floatY);
 
-    // Glow halo
-    for (let g = 3; g > 0; g--) {
-      noStroke();
-      fill(100, 160, 255, 18 * g);
-      circle(0, 0, bluSize + g * 18);
-    }
-
-    // Body
+  
+  for (let g = 3; g > 0; g--) {
     noStroke();
-    fill(PALETTE?.blue || color(80, 160, 255));
-    ellipse(0, 0, bluSize, bluSize);
+    fill(100, 160, 255, 18 * g);
+    circle(0, 0, bluSize + g * 18);
+  }
 
-    // Cheeks
-    fill(255, 160, 180, 90);
-    ellipse(-bluSize * 0.28, bluSize * 0.08, bluSize * 0.22, bluSize * 0.14);
-    ellipse( bluSize * 0.28, bluSize * 0.08, bluSize * 0.22, bluSize * 0.14);
 
-    // Eyes
-    fill(255);
-    ellipse(-bluSize * 0.18, -bluSize * 0.12, bluSize * 0.3, bluSize * 0.3);
-    ellipse( bluSize * 0.18, -bluSize * 0.12, bluSize * 0.3, bluSize * 0.3);
-    fill(30);
-    ellipse(-bluSize * 0.18, -bluSize * 0.12, bluSize * 0.13, bluSize * 0.13);
-    ellipse( bluSize * 0.18, -bluSize * 0.12, bluSize * 0.13, bluSize * 0.13);
-    // Eye shine
-    fill(255);
-    ellipse(-bluSize * 0.15, -bluSize * 0.15, bluSize * 0.05, bluSize * 0.05);
-    ellipse( bluSize * 0.21, -bluSize * 0.15, bluSize * 0.05, bluSize * 0.05);
+  fill(PALETTE?.blue || color(80, 160, 255));
+  noStroke();
+  
+  // Left Arm
+  push();
+  translate(-bluSize * 0.45, 0); 
+  rotate(radians(armSwing - 20)); 
+  ellipse(-bluSize * 0.1, 0, bluSize * 0.25, bluSize * 0.12);
+  pop();
 
-    // Smile
-    noFill();
-    stroke(30);
-    strokeWeight(max(2, bluSize * 0.032));
-    arc(0, bluSize * 0.12, bluSize * 0.26, bluSize * 0.13, 0, PI);
+  // Right Arm
+  push();
+  translate(bluSize * 0.45, 0); 
+  rotate(radians(-armSwing + 20)); 
+  ellipse(bluSize * 0.1, 0, bluSize * 0.25, bluSize * 0.12);
+  pop();
 
-    // Tiny star accessory
-    noStroke();
-    fill(255, 220, 60);
-    this._drawStar(-bluSize * 0.46, -bluSize * 0.35, 4, 8, 5);
-    pop();
+  rectMode(CENTER);
+  rect(0, 0, bluSize + breath, bluSize - breath, bluSize * 0.4);
 
-    this.drawStartButton(L.btnY, "startBtnHover");
-    this._drawScrollIndicator();
+  fill(255, 160, 180, 140);
+  ellipse(-bluSize * 0.28, bluSize * 0.1, bluSize * 0.22, bluSize * 0.14);
+  ellipse( bluSize * 0.28, bluSize * 0.1, bluSize * 0.22, bluSize * 0.14);
+
+  fill(255); 
+  ellipse(-bluSize * 0.18, -bluSize * 0.1, bluSize * 0.35, bluSize * 0.35);
+  ellipse( bluSize * 0.18, -bluSize * 0.1, bluSize * 0.35, bluSize * 0.35);
+  
+  fill(30); 
+  ellipse(-bluSize * 0.18, -bluSize * 0.1, bluSize * 0.18, bluSize * 0.18);
+  ellipse( bluSize * 0.18, -bluSize * 0.1, bluSize * 0.18, bluSize * 0.18);
+  
+  
+  fill(255);
+  ellipse(-bluSize * 0.13, -bluSize * 0.14, bluSize * 0.08, bluSize * 0.08);
+  ellipse( bluSize * 0.23, -bluSize * 0.14, bluSize * 0.08, bluSize * 0.08);
+  
+  ellipse(-bluSize * 0.22, -bluSize * 0.06, bluSize * 0.03, bluSize * 0.03);
+  ellipse( bluSize * 0.14, -bluSize * 0.06, bluSize * 0.03, bluSize * 0.03);
+
+  
+  noFill();
+  stroke(30);
+  strokeWeight(max(2, bluSize * 0.035));
+  
+  arc(0, bluSize * 0.12 - (breath * 0.5), bluSize * 0.26, bluSize * 0.16, 0, PI);
+
+ 
+  noStroke();
+  fill(255, 220, 60);
+
+  this._drawStar(-bluSize * 0.42 - (breath*0.5), -bluSize * 0.38 + (breath*0.5), 4, 8, 5);
+  
+  pop(); 
+
+  this.drawStartButton(L.btnY, "startBtnHover");
+  this._drawScrollIndicator();
   }
 
   _drawScrollIndicator() {
