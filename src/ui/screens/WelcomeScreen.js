@@ -224,6 +224,7 @@ class WelcomeScreen {
     this.drawStartButton(L.btnY, "startBtnHover");
     this._drawScrollIndicator();
   }
+  
 
   _drawScrollIndicator() {
     push();
@@ -684,8 +685,14 @@ class WelcomeScreen {
   }
 
   _triggerGameStart() {
-    gameState.setScreen(GAME_STATES.AGE_SELECT);
-    if (typeof audioManager !== "undefined") audioManager.playSound("petal");
+    if (typeof audioManager !== "undefined") {
+      audioManager.playSound("petal");
+    }
+    if (typeof uiManager !== "undefined" && uiManager.requestTransition) {
+      uiManager.requestTransition(GAME_STATES.AGE_SELECT);
+    } else {
+      gameState.setScreen(GAME_STATES.AGE_SELECT);
+    }
     cursor(ARROW);
     this.scrollOffset = 0;
     this.targetScroll = 0;

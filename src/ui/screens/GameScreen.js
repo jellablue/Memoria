@@ -131,13 +131,13 @@ class GameScreen {
       cy,
       stayBtn: {
         x: cx - gap / 2 - btnW,
-        y: cy + 86,
+        y: cy + 50,
         w: btnW,
         h: btnH,
       },
       leaveBtn: {
         x: cx + gap / 2,
-        y: cy + 86,
+        y: cy + 50,
         w: btnW,
         h: btnH,
       },

@@ -204,7 +204,7 @@ class SettingsScreen {
     textAlign(CENTER, CENTER);
     textStyle(BOLD);
     textSize(16);
-    text("Reset Brain Stats", resetBtn.x + resetBtn.w / 2, resetBtn.y + resetBtn.h / 2 + 1);
+    text("Reset Wonderland Stats", resetBtn.x + resetBtn.w / 2, resetBtn.y + resetBtn.h / 2 + 1);
 
     fill(140);
     textStyle(NORMAL);

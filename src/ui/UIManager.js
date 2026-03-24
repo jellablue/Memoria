@@ -21,6 +21,7 @@ class UIManager {
 
   _shouldTransitionTo(targetScreen) {
     return (
+      targetScreen === GAME_STATES.AGE_SELECT ||
       targetScreen === GAME_STATES.MENU   ||
       targetScreen === GAME_STATES.GAME_A ||
       targetScreen === GAME_STATES.GAME_B ||
