@@ -171,6 +171,8 @@ class KaleidoPop extends Game {
       return;
     }
 
+    this.drawDynamicBackground();
+
     // 1. Draw UI (Doesn't shake)
     this.handleUI();
 
@@ -250,78 +252,108 @@ class KaleidoPop extends Game {
     textAlign(CENTER, CENTER);
     if (this.gameState === "MEMORIZE") {
       this.timer--;
+      
+      // Title with subtle glowing shadow
+      drawingContext.shadowBlur = 10;
+      drawingContext.shadowColor = "rgba(255,255,255,0.8)";
       fill(80);
-      textSize(28); textStyle(BOLD);
+      textSize(32); textStyle(BOLD);
       text("Memorize the pattern!", width / 2, 60);
+      drawingContext.shadowBlur = 0;
 
-      let barW = 300;
+      let barW = 340;
       let fillW = map(this.timer, 0, this.timerMax, 0, barW);
       noStroke();
-      fill(220);
+      
+      // Timer Track Background
+      fill(220, 150);
       rectMode(CORNER);
-      rect(width/2 - barW/2, 90, barW, 10, 5);
-      fill(PALETTE?.pink || "#F6C0D9");
-      rect(width/2 - barW/2, 90, fillW, 10, 5);
+      rect(width/2 - barW/2, 90, barW, 12, 6);
+      
+      // Timer Fill (Color changes based on time left)
+      let timerColor = this.timer < 60 ? (PALETTE?.pink || "#F6C0D9") : (PALETTE?.blue || "#B5CDF5");
+      fill(timerColor);
+      rect(width/2 - barW/2, 90, fillW, 12, 6);
 
       if (this.timer <= 0) this.gameState = "INPUT";
     }
     else if (this.gameState === "INPUT") {
+      drawingContext.shadowBlur = 10;
+      drawingContext.shadowColor = "rgba(255,255,255,0.8)";
       fill(80);
-      textSize(28); textStyle(BOLD);
+      textSize(32); textStyle(BOLD);
       text("Paint the petals!", width / 2, 60);
-      textSize(16); textStyle(NORMAL); fill(120);
-      text("Press ENTER when finished", width / 2, 90);
+      drawingContext.shadowBlur = 0;
+      
+      textSize(16); textStyle(NORMAL); fill(100);
+      text("Press ENTER when finished", width / 2, 95);
     }
 
+    // --- LEFT HUD (Lives, Level, Score) ---
     push();
     let hudX = max(40, width * 0.05);
     let hudY = height / 2 - 100;
 
-    fill(255, 180); noStroke();
+    // Glassmorphism Base
+    drawingContext.shadowBlur = 25;
+    drawingContext.shadowColor = "rgba(0,0,0,0.1)";
+    fill(255, 210); // Slightly transparent white
+    stroke(255); // Solid white rim light
+    strokeWeight(2);
     rectMode(CORNER);
-    rect(hudX, hudY, 160, 200, 20);
+    rect(hudX, hudY, 160, 210, 20); // Taller to fit spacing better
+    
+    drawingContext.shadowBlur = 0;
+    noStroke();
 
     fill(80); textAlign(LEFT, TOP);
     textSize(14); textStyle(BOLD);
-    text("LIVES", hudX + 20, hudY + 20);
+    text("LIVES", hudX + 25, hudY + 25);
     textSize(20);
-    text("❤️".repeat(max(0, this.lives)), hudX + 20, hudY + 40); // Added max() to prevent string error
+    text("❤️".repeat(max(0, this.lives)), hudX + 25, hudY + 45);
 
     textSize(14); textStyle(BOLD); fill(80);
-    text("LEVEL", hudX + 20, hudY + 80);
-    textSize(24); fill(PALETTE?.blue || "#5BACE0");
-    text(this.level, hudX + 20, hudY + 100);
+    text("LEVEL", hudX + 25, hudY + 85);
+    textSize(28); fill(PALETTE?.blue || "#5BACE0");
+    text(this.level, hudX + 25, hudY + 105);
 
     textSize(14); textStyle(BOLD); fill(80);
-    text("SCORE", hudX + 20, hudY + 140);
-    textSize(24); fill(PALETTE?.green || "#5DC98A");
-    text(this.totalScore, hudX + 20, hudY + 160);
+    text("SCORE", hudX + 25, hudY + 150);
+    textSize(28); fill(PALETTE?.green || "#5DC98A");
+    text(this.totalScore, hudX + 25, hudY + 170);
     pop();
 
+    // --- RIGHT HUD (Palette Selection) ---
     if (this.gameState === "INPUT") {
       push();
       let spacing = 65;
       let rightX = width - 80;
       let startY = height / 2 - ((this.palette.length - 1) * spacing) / 2;
 
-      fill(255, 180); noStroke();
+      // Glassmorphism Base for Palette
+      drawingContext.shadowBlur = 25;
+      drawingContext.shadowColor = "rgba(0,0,0,0.1)";
+      fill(255, 210);
+      stroke(255);
+      strokeWeight(2);
       rectMode(CORNER);
-      rect(rightX - 35, startY - 40, 70, (this.palette.length * spacing) + 20, 35);
+      rect(rightX - 45, startY - 45, 90, (this.palette.length * spacing) + 30, 45); // Pill shape
 
       for (let i = 0; i < this.palette.length; i++) {
         let py = startY + i * spacing;
         let isSelected = (this.selectedBrushColor === this.palette[i]);
 
-        drawingContext.shadowBlur = isSelected ? 15 : 5;
-        drawingContext.shadowColor = isSelected ? this.palette[i] : "rgba(0,0,0,0.2)";
+        // Enhanced Selection Glow
+        drawingContext.shadowBlur = isSelected ? 20 : 5;
+        drawingContext.shadowColor = isSelected ? this.palette[i] : "rgba(0,0,0,0.15)";
 
         fill(this.palette[i]);
         if (isSelected) {
-          stroke(255); strokeWeight(4);
-          circle(rightX, py, 45);
+          stroke(255); strokeWeight(5);
+          circle(rightX, py, 48); // Slightly larger when selected
         } else {
-          stroke(200); strokeWeight(2);
-          circle(rightX, py, 35);
+          stroke(230); strokeWeight(2);
+          circle(rightX, py, 38);
         }
       }
       drawingContext.shadowBlur = 0;
@@ -563,6 +595,55 @@ class KaleidoPop extends Game {
       pop(); // End Button
 
       pop(); // End Card
+  }
+
+  drawDynamicBackground() {
+    push();
+    // 1. Center the coordinate system for the background
+    translate(width / 2, height / 2);
+    
+    // 2. Base ambient rotation (very slow)
+    rotate(frameCount * 0.0005);
+
+    noFill();
+    strokeWeight(2);
+
+    // 3. Generate concentric, geometric rings
+    let rings = 6;
+    let maxRadius = (width > height ? width : height) * 0.6; 
+    
+    for (let i = 1; i <= rings; i++) {
+      let baseRadius = (maxRadius / rings) * i;
+      
+      // Calculate opacity: Outer rings are more faded
+      let alpha = map(i, 1, rings, 50, 5); 
+      
+      // Inherit the game's color palette to keep the theme cohesive
+      let col = color(this.palette[i % this.palette.length]);
+      col.setAlpha(alpha);
+      stroke(col);
+
+      push();
+      // Each ring rotates at slightly different speeds and directions
+      let ringRotation = i % 2 === 0 ? (frameCount * 0.001 * i) : (-frameCount * 0.001 * i);
+      rotate(ringRotation);
+      
+      // Determine the number of vertices for the polygon (creates a star/gem shape)
+      let points = 6 + (i * 2); 
+      let angleStep = TWO_PI / points;
+
+      beginShape();
+      for (let a = 0; a < TWO_PI; a += angleStep) {
+        // Parametric pulse: The radius breathes slightly over time
+        let pulseR = baseRadius + sin(frameCount * 0.02 + i) * 15;
+        let x = cos(a) * pulseR;
+        let y = sin(a) * pulseR;
+        vertex(x, y);
+      }
+      endShape(CLOSE);
+      pop();
+    }
+    pop();
   }
 
   restartGame() {
