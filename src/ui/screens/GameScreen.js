@@ -6,6 +6,7 @@ class GameScreen {
 
     this.summaryCard    = null;
     this._scoreReported = false;
+    this.showExitConfirm = false;
 
     this.backBtnScale = 1.0;
 
@@ -45,6 +46,7 @@ class GameScreen {
     this._resetGameInstance();
     this.summaryCard = null;
     this._scoreReported = false;
+    this.showExitConfirm = false;
 
     if (gameState.showInstructions) {
       this.instructionOverlay = new InstructionOverlay(gameState.currentInstructionKey);
@@ -99,6 +101,94 @@ class GameScreen {
     this._resetGameInstance();
     this.summaryCard    = null;
     this._scoreReported = false;
+    this.showExitConfirm = false;
+  }
+
+  _backButtonHit() {
+    let cx = max(40, width * 0.05);
+    let cy = max(40, height * 0.06);
+    return dist(mouseX, mouseY, cx, cy) < 24;
+  }
+
+  _confirmBounds() {
+    const cardW = min(width * 0.86, 560);
+    const cardH = 300;
+    const cx = width / 2;
+    const cy = height / 2;
+    const btnW = 180;
+    const btnH = 50;
+    const gap = 26;
+
+    return {
+      cardW,
+      cardH,
+      cx,
+      cy,
+      stayBtn: {
+        x: cx - gap / 2 - btnW,
+        y: cy + 86,
+        w: btnW,
+        h: btnH,
+      },
+      leaveBtn: {
+        x: cx + gap / 2,
+        y: cy + 86,
+        w: btnW,
+        h: btnH,
+      },
+    };
+  }
+
+  _inRect(b) {
+    return mouseX >= b.x && mouseX <= b.x + b.w && mouseY >= b.y && mouseY <= b.y + b.h;
+  }
+
+  _drawExitConfirmation() {
+    const b = this._confirmBounds();
+    const stayHover = this._inRect(b.stayBtn);
+    const leaveHover = this._inRect(b.leaveBtn);
+
+    push();
+    fill(0, 140);
+    noStroke();
+    rect(0, 0, width, height);
+
+    drawingContext.shadowBlur = 28;
+    drawingContext.shadowColor = "rgba(0,0,0,0.2)";
+    fill(255);
+    rectMode(CENTER);
+    rect(b.cx, b.cy, b.cardW, b.cardH, 20);
+    rectMode(CORNER);
+    drawingContext.shadowBlur = 0;
+
+    textAlign(CENTER, CENTER);
+    fill(PALETTE?.purple || "#9B5DE5");
+    textStyle(BOLD);
+    textSize(30);
+    text("Leave This Game?", b.cx, b.cy - 80);
+
+    fill(95);
+    textStyle(NORMAL);
+    textSize(18);
+    text("If you leave now, this run will not be recorded.", b.cx, b.cy - 28);
+    text("Go back to menu anyway?", b.cx, b.cy);
+
+    fill(stayHover ? "#E8EDF5" : "#F3F5F9");
+    rect(b.stayBtn.x, b.stayBtn.y, b.stayBtn.w, b.stayBtn.h, 14);
+    fill(85);
+    textStyle(BOLD);
+    textSize(17);
+    text("Stay", b.stayBtn.x + b.stayBtn.w / 2, b.stayBtn.y + b.stayBtn.h / 2 + 1);
+
+    fill(leaveHover ? (PALETTE?.pink || "#FFB7B2") : "#F6D3CF");
+    rect(b.leaveBtn.x, b.leaveBtn.y, b.leaveBtn.w, b.leaveBtn.h, 14);
+    fill(95);
+    textStyle(BOLD);
+    textSize(17);
+    text("Leave", b.leaveBtn.x + b.leaveBtn.w / 2, b.leaveBtn.y + b.leaveBtn.h / 2 + 1);
+
+    if (stayHover || leaveHover) cursor(HAND);
+    pop();
   }
 
   draw() {
@@ -122,6 +212,10 @@ class GameScreen {
 
     if (this.summaryCard) {
       this.summaryCard.draw();
+    }
+
+    if (this.showExitConfirm) {
+      this._drawExitConfirmation();
     }
   }
 
@@ -157,18 +251,35 @@ class GameScreen {
     endShape();
     pop();
 
-    if (hover && !this.summaryCard && !this.instructionOverlay) {
+    if (hover && !this.summaryCard && !this.instructionOverlay && !this.showExitConfirm) {
         cursor(HAND);
     }
   }
 
   handleClick() {
+    if (this.showExitConfirm) {
+      const b = this._confirmBounds();
+      if (this._inRect(b.stayBtn)) {
+        if (typeof audioManager !== 'undefined') audioManager.playSound("petal");
+        this.showExitConfirm = false;
+      } else if (this._inRect(b.leaveBtn)) {
+        if (typeof audioManager !== 'undefined') audioManager.playSound("petal");
+        this.showExitConfirm = false;
+        if (typeof audioManager !== 'undefined') audioManager.playBackgroundMusic("menu");
+        gameState.setScreen(GAME_STATES.MENU);
+        gameState.hideGameInstructions();
+      }
+      return true;
+    }
+
     if (this.summaryCard) {
       if (this.summaryCard.isPlayAgainClicked && this.summaryCard.isPlayAgainClicked()) {
+        if (typeof audioManager !== 'undefined') audioManager.playSound("petal");
         this._restartGame();
         return true;
       }
       if (this.summaryCard.isMenuClicked && this.summaryCard.isMenuClicked()) {
+        if (typeof audioManager !== 'undefined') audioManager.playSound("petal");
         this.summaryCard = null;
         this._scoreReported = false;
         if (typeof audioManager !== 'undefined') audioManager.playBackgroundMusic("menu");
@@ -179,17 +290,22 @@ class GameScreen {
       return true;
     }
 
-    let cx = max(40, width * 0.05);
-    let cy = max(40, height * 0.06);
-    if (dist(mouseX, mouseY, cx, cy) < 24) {
-      if (typeof audioManager !== 'undefined') audioManager.playBackgroundMusic("menu");
-      gameState.setScreen(GAME_STATES.MENU);
-      gameState.hideGameInstructions();
+    if (this._backButtonHit()) {
+      if (gameState.showInstructions && this.instructionOverlay) {
+        if (typeof audioManager !== 'undefined') audioManager.playSound("petal");
+        if (typeof audioManager !== 'undefined') audioManager.playBackgroundMusic("menu");
+        gameState.setScreen(GAME_STATES.MENU);
+        gameState.hideGameInstructions();
+      } else {
+        if (typeof audioManager !== 'undefined') audioManager.playSound("petal");
+        this.showExitConfirm = true;
+      }
       return true;
     }
 
     if (gameState.showInstructions && this.instructionOverlay) {
       if (this.instructionOverlay.isButtonClicked && this.instructionOverlay.isButtonClicked()) {
+        if (typeof audioManager !== 'undefined') audioManager.playSound("petal");
         gameState.hideGameInstructions();
         this._resetGameInstance();
         this.game = gameState.getGameInstance(this.gameType);

@@ -352,6 +352,7 @@ class TiptoeTrails extends Game {
       let cardX = width / 2, btnY = height / 2 + 80, btnW = 220, btnH = 50;
 
       if (mouseX > cardX - btnW/2 && mouseX < cardX + btnW/2 && mouseY > btnY - btnH/2 && mouseY < btnY + btnH/2) {
+        if (typeof audioManager !== "undefined") audioManager.playSound("petal");
           if (this.gameState === "RESULT") {
               this.level++;
               this.setupLevel();

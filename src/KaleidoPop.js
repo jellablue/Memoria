@@ -340,7 +340,7 @@ class KaleidoPop extends Game {
       
       if (mouseX > width/2 - btnW/2 && mouseX < width/2 + btnW/2 && 
           mouseY > absoluteBtnY - btnH/2 && mouseY < absoluteBtnY + btnH/2) {
-        
+        if (typeof audioManager !== "undefined") audioManager.playSound("petal");
         this.showMilestoneOverlay = false;
         // Reset the timer when they close the overlay so they don't lose time
         this.levelStartMillis = millis();
@@ -452,6 +452,7 @@ class KaleidoPop extends Game {
   checkPopupClick() {
       let cardX = width / 2, btnY = height / 2 + 80, btnW = 220, btnH = 50;
       if (mouseX > cardX - btnW/2 && mouseX < cardX + btnW/2 && mouseY > btnY - btnH/2 && mouseY < btnY + btnH/2) {
+        if (typeof audioManager !== "undefined") audioManager.playSound("petal");
           if (this.gameState === "RESULT") this.nextLevel();
           else if (this.gameState === "GAMEOVER") this.restartGame();
       }
