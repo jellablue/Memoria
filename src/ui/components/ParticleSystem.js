@@ -142,14 +142,12 @@ class Particle {
       PALETTE?.green || "#A0EACD", PALETTE?.yellow || "#FFFFE0", 
       PALETTE?.purple || "#C3B1E1"
     ];
-    
-    // Spawn 80 particles
     for (let i = 0; i < 80; i++) {
       this.confetti.push({
         x: width / 2,
-        y: height / 2 + 50, // Burst from slightly below center
-        vx: random(-10, 10), // Explode outwards
-        vy: random(-15, -5), // Shoot upwards
+        y: height / 2 + 50,
+        vx: random(-10, 10),
+        vy: random(-15, -5),
         size: random(8, 16),
         color: random(colors),
         angle: random(TWO_PI),

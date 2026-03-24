@@ -25,19 +25,12 @@ class ProfileScreen {
     const isNarrow = width < 768;
     const cx = width / 2;
     const headerY = 80;
-
-    // --- THE VISUAL BOUNDING BOX FIX ---
     const radarRadius = min(120, width * 0.22);
-    const LD = radarRadius + 55; // Distance to the labels
-    
-    // We calculate a 25% shift based on the height of the radar's bounding box
-    // This perfectly corrects the "top-heavy" triangle shape
+    const LD = radarRadius + 55;
     const visualOffset = 0.25 * LD; 
 
     const cardH = radarRadius * 3.2; 
-    // Safely position the center of the white card well below the header
     const radarCardY = headerY + 100 + cardH / 2; 
-    // Shift the actual drawing origin of the radar graph downward inside the card
     const radarCY = radarCardY + visualOffset; 
 
     const summaryHeaderY = radarCardY + cardH / 2 + 50;
@@ -50,7 +43,7 @@ class ProfileScreen {
 
     this.layout = {
       cx, isNarrow, cardW,
-      headerY, radarCardY, radarCY, radarRadius, cardH, // We now pass radarCY to the renderer
+      headerY, radarCardY, radarCY, radarRadius, cardH,
       summaryHeaderY, summaryCardsStartY,
       metricH, metricGap,
       totalVirtualHeight
@@ -69,8 +62,6 @@ class ProfileScreen {
 
   draw() {
     this._syncLayout();
-
-    // 1. Unified Wonderland Background (Airy Daydream)
     this._drawDynamicBackground();
 
     this.scrollOffset = lerp(this.scrollOffset, this.targetScroll, 0.1);
@@ -88,16 +79,12 @@ class ProfileScreen {
     this.drawBackButton();
     this.drawScrollbar();
   }
-
-  // Soft, floating ambient background
   _drawDynamicBackground() {
     push();
     fill(245, 248, 255); 
     noStroke();
     rectMode(CORNER);
     rect(0, 0, width, height);
-
-    // Procedural ambient orbs (lightweight version for the profile screen)
     fill(200, 210, 240, 80);
     for(let i = 0; i < 5; i++) {
       let x = (width * 0.2 * i) + sin(frameCount * 0.005 + i) * 100;
@@ -111,14 +98,14 @@ class ProfileScreen {
     const { cx, headerY } = this.layout;
 
     push();
-    // Glassmorphism Title Plate
+    
     drawingContext.shadowBlur = 15;
     drawingContext.shadowColor = "rgba(0,0,0,0.05)";
     fill(255, 200);
     stroke(255);
     strokeWeight(2);
     rectMode(CENTER);
-    rect(cx, headerY + 10, min(width * 0.8, 500), 80, 25);
+    rect(cx, headerY + 10, min(width * 0.8, 500), 90, 25);
     drawingContext.shadowBlur = 0;
     noStroke();
 
@@ -126,12 +113,12 @@ class ProfileScreen {
     textAlign(CENTER, CENTER);
     textSize(constrain(width * 0.045, 24, 32));
     textStyle(BOLD);
-    text("\uD83E\uDDE0 Your Brain Profile", cx, headerY - 5);
+    text("📖 Your Wonderland Passport", cx, headerY - 5);
 
     fill(120);
     textSize(constrain(width * 0.025, 13, 16));
     textStyle(NORMAL);
-    text("Cognitive profile from peak and average performance", cx, headerY + 22);
+    text("A magical record of your brightest memories and journeys!", cx, headerY + 26);
     pop();
   }
 
@@ -169,8 +156,6 @@ class ProfileScreen {
             tiptoe: { finalScore: 0, levelLabel: "Developing", peakPct: 0, avgPct: 0, consistencyLabel: "Low", tagline: "" },
           },
         };
-
-    // Subheader
     push();
     fill(130);
     textSize(14);
@@ -178,7 +163,7 @@ class ProfileScreen {
     textAlign(LEFT, CENTER);
     noStroke();
     let leftEdge = cx - cardW/2;
-    text("DETAILED COGNITIVE BREAKDOWN", leftEdge + 15, summaryHeaderY);
+    text("WONDERLAND ADVENTURE STATS", leftEdge + 15, summaryHeaderY);
 
     stroke(220);
     strokeWeight(2);
@@ -197,7 +182,6 @@ class ProfileScreen {
       const cardY = summaryCardsStartY + i * (metricH + metricGap);
       
       push();
-      // 1. Glassmorphism Card Base
       fill(255, 230);
       stroke(255);
       strokeWeight(2);
@@ -207,9 +191,6 @@ class ProfileScreen {
       rect(leftEdge, cardY, cardW, metricH, 20);
       drawingContext.shadowBlur = 0;
       noStroke();
-
-      // 2. Top Row: Icon, Titles, and Main Score
-      // Icon
       let iconColor = color(m.color);
       fill(red(iconColor), green(iconColor), blue(iconColor), 50);
       circle(leftEdge + 45, cardY + 45, 50);
@@ -217,8 +198,6 @@ class ProfileScreen {
       textAlign(CENTER, CENTER);
       textSize(24);
       text(m.icon, leftEdge + 45, cardY + 47);
-
-      // Titles
       fill(60);
       textSize(20);
       textStyle(BOLD);
@@ -229,15 +208,11 @@ class ProfileScreen {
       textSize(14);
       textStyle(NORMAL);
       text("Trained in: " + m.game, leftEdge + 85, cardY + 58);
-
-      // Main Score (Right Aligned)
       fill(m.color);
       textSize(32);
       textStyle(BOLD);
       textAlign(RIGHT, CENTER);
       text(round(m.score * this.animT) + "%", leftEdge + cardW - 30, cardY + 45);
-
-      // 3. Middle Row: Stats & Tagline
       const detail = m.detail || { finalScore: m.score, levelLabel: "Developing", peakPct: m.score, avgPct: m.sessionScore, consistencyLabel: "Low", tagline: "" };
       
       fill(100);
@@ -245,30 +220,18 @@ class ProfileScreen {
       textStyle(NORMAL);
       textAlign(LEFT, CENTER);
       text(`Peak: ${round(detail.peakPct)}%   |   Avg: ${round(detail.avgPct)}%   |   ${detail.consistencyLabel} Consistency`, leftEdge + 35, cardY + 95);
-      
-      // 4. Bottom Row: Full-width Progress Bar
-      const barW = cardW - 70; // Responsive width
+      const barW = cardW - 70;
       const barX = leftEdge + 35;
       const barY = cardY + 125;
-
-      // Track background
       fill(235);
       rect(barX, barY, barW, 14, 7);
-
-      // Average Session Fill (Faded)
       fill(red(iconColor), green(iconColor), blue(iconColor), 90);
       rect(barX, barY, barW * (m.sessionScore / 100) * this.animT, 14, 7);
-
-      // Peak/Main Score Fill (Solid)
       fill(m.color);
       rect(barX, barY, barW * (m.score / 100) * this.animT, 14, 7);
-
-      // 5. PB (Personal Best) Badge
       const delta = (typeof starBank !== 'undefined' && starBank.getSessionDelta) ? starBank.getSessionDelta(m.gameKey) : null;
       if (delta) {
-        // Position badge relative to the end of the progress bar
         let currentFillX = barX + (barW * (m.score / 100) * this.animT);
-        // Ensure badge doesn't fly off the card bounds
         let badgeX = constrain(currentFillX, barX + 40, barX + barW - 40); 
         
         fill(255, 240, 180);
@@ -283,11 +246,9 @@ class ProfileScreen {
     }
   }
 
-  // ... [Keep _drawGrid, _drawAxes, and _drawPlayerShape exactly as they are] ...
-
   _drawLabels(cx, cy, R) {
     const scores = (typeof starBank !== 'undefined') ? starBank.getCognitiveScores() : { visual: 0, auditory: 0, spatial: 0 };
-    const LD = R + 55; // Pushed slightly further out to prevent overlapping the radar
+    const LD = R + 55;
 
     const data = [
       { label: "VISUAL",   sub: "Binding",    score: scores.visual,   angle: -HALF_PI,                  color: PALETTE?.pink || "#FFB7B2" },
@@ -301,20 +262,14 @@ class ProfileScreen {
       
       push();
       noStroke();
-      
-      // Clean, unified pill badge backing
       drawingContext.shadowBlur = 10;
       drawingContext.shadowColor = "rgba(0,0,0,0.1)";
       fill(255); 
       rectMode(CENTER); 
       rect(lx, ly, 110, 56, 15);
       drawingContext.shadowBlur = 0;
-
-      // Color accent line at the top of the badge
       fill(d.color);
       rect(lx, ly - 26, 60, 4, 2);
-
-      // Text Alignment logic fixed
       textAlign(CENTER, CENTER);
       fill(60); 
       textSize(12); 

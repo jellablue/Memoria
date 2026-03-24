@@ -13,7 +13,7 @@ class WelcomeScreen {
 
     
     this._particles = Array.from({ length: 22 }, (_, i) => ({
-      x:    (i * 137.508) % 1,   // golden-angle spread
+      x:    (i * 137.508) % 1,
       y:    (i * 97.31)   % 1,
       r:    4 + (i % 5) * 3,
       spd:  0.4 + (i % 4) * 0.18,
@@ -22,8 +22,6 @@ class WelcomeScreen {
 
     this._syncLayout();
   }
-
-  // ─── Layout ──────────────────────────────────────────────────────────────
 
   _syncLayout() {
     if (this._lastW === width && this._lastH === height) return;
@@ -59,8 +57,6 @@ class WelcomeScreen {
     this.targetScroll = constrain(this.targetScroll + delta, 0, this.maxScroll);
   }
 
-  // ─── Main draw ───────────────────────────────────────────────────────────
-
   draw() {
     this._syncLayout();
     this.scrollOffset = lerp(this.scrollOffset, this.targetScroll, 0.1);
@@ -76,18 +72,16 @@ class WelcomeScreen {
     this.drawSettingsButton();
   }
 
-  // ─── Decorative helpers ───────────────────────────────────────────────────
-
   _drawFloatingParticles(fromY, toY) {
     push();
     noStroke();
     const t = frameCount * 0.006;
     const blobColors = [
-      [255, 200, 220],  // rose
-      [200, 230, 255],  // sky
-      [220, 200, 255],  // lavender
-      [200, 255, 230],  // mint
-      [255, 240, 190],  // butter
+      [255, 200, 220],
+      [200, 230, 255],
+      [220, 200, 255],
+      [200, 255, 230],
+      [255, 240, 190],
     ];
     for (let i = 0; i < this._particles.length; i++) {
       const p = this._particles[i];
@@ -138,13 +132,9 @@ class WelcomeScreen {
     pop();
   }
 
-  // ─── Hero ─────────────────────────────────────────────────────────────────
-
   drawHeroSection() {
     const L = this.layout;
     push();
-
-    // Title
     drawingContext.shadowBlur  = 18;
     drawingContext.shadowColor = "rgba(150,100,255,0.25)";
     fill(255);
@@ -168,8 +158,6 @@ class WelcomeScreen {
       width / 2, L.infoY
     );
     pop();
-
-    // Blu character
     const floatY  = sin(frameCount * 0.05) * 9; 
   const breath  = sin(frameCount * 0.08) * (L.bluSize * 0.03);
   const armSwing = sin(frameCount * 0.1) * 12; 
@@ -190,15 +178,11 @@ class WelcomeScreen {
 
   fill(PALETTE?.blue || color(80, 160, 255));
   noStroke();
-  
-  // Left Arm
   push();
   translate(-bluSize * 0.45, 0); 
   rotate(radians(armSwing - 20)); 
   ellipse(-bluSize * 0.1, 0, bluSize * 0.25, bluSize * 0.12);
   pop();
-
-  // Right Arm
   push();
   translate(bluSize * 0.45, 0); 
   rotate(radians(-armSwing + 20)); 
@@ -267,15 +251,11 @@ class WelcomeScreen {
     pop();
   }
 
-  // ─── About section ────────────────────────────────────────────────────────
-
   drawAboutSection() {
     const L   = this.layout;
     const cx  = width / 2;
     const mW  = min(width * 0.88, 680);   
     const pad = 28;                        
-
-    // Panel base
     push();
     noStroke();
     fill(252, 248, 255);
@@ -286,45 +266,27 @@ class WelcomeScreen {
     this._drawSparkles(L.aboutStartY, L.totalVirtualHeight);
 
     let y = L.aboutStartY + 70;
-
-    // ── Section: Header ────────────────────────────────────────────
     y = this._drawSectionHeader(cx, y, "Inside Wonderland", "Your brain-training adventure starts here ✨");
     y += 18;
-
-    // ── Section: How it Works ──────────────────────────────────────
     y = this._drawHowItWorks(cx, mW, y);
     y += 30;
-
-    // ── Divider ───────────────────────────────────────────────────
     y = this._drawWaveDivider(cx, y);
     y += 30;
-
-    // ── Section: Games ────────────────────────────────────────────
     y = this._drawSectionHeader(cx, y, "🎮 The Three Games", "Each game trains a different part of your memory");
     y += 14;
     y = this._drawGameCards(cx, mW, pad, y);
     y += 30;
-
-    // ── Divider ───────────────────────────────────────────────────
     y = this._drawWaveDivider(cx, y);
     y += 30;
-
-    // ── Section: Scoring ──────────────────────────────────────────
     y = this._drawSectionHeader(cx, y, "📈 Scoring & Progression", "How stars, streaks, and your brain profile work");
     y += 14;
     y = this._drawScoringRules(cx, mW, pad, y);
     y += 30;
-
-    // ── Section: Controls ─────────────────────────────────────────
     y = this._drawControlsCard(cx, mW, pad, y);
     y += 50;
-
-    // ── Bottom CTA ────────────────────────────────────────────────
     this.layout.bottomBtnY = y;
     this.drawStartButton(y, "bottomBtnHover");
   }
-
-  // ─── Sub-section renderers ────────────────────────────────────────────────
 
   _drawSectionHeader(cx, y, title, sub) {
     const L = this.layout;
@@ -380,7 +342,6 @@ class WelcomeScreen {
       const icy = y;
 
       push();
-      // Card
       noStroke();
       drawingContext.shadowBlur  = 18;
       drawingContext.shadowColor = "rgba(180,140,255,0.13)";
@@ -388,8 +349,6 @@ class WelcomeScreen {
       rectMode(CENTER);
       rect(icx, icy, cardW, cardH, 22);
       drawingContext.shadowBlur = 0;
-
-      // Icon circle
       fill(245, 238, 255);
       circle(icx, icy - 20, 52);
 
@@ -445,7 +404,6 @@ class WelcomeScreen {
     let y = startY;
 
     for (const g of games) {
-      // ── Card shell ──────────────────────────────────────────────
       push();
       noStroke();
       drawingContext.shadowBlur  = 22;
@@ -454,8 +412,6 @@ class WelcomeScreen {
       rectMode(CENTER);
       rect(cx, y + cardH / 2, mW, cardH, 24);
       drawingContext.shadowBlur = 0;
-
-      // Left accent bar
       fill(g.accent);
       rectMode(CORNER);
       rect(cx - mW / 2, y + 14, 5, cardH - 28, 3);
@@ -466,23 +422,17 @@ class WelcomeScreen {
       
       const textX    = iconCX + 42;         
       const textW    = mW - (textX - cardLeft) - pad; 
-
-      // ── Icon bubble ─────────────────────────────────────────────
       fill(255, 200);
       circle(iconCX, iconCY, 52);
       textAlign(CENTER, CENTER);
       textSize(26);
       text(g.icon, iconCX, iconCY);
-
-      // ── Text block ──────────────────────────────────────────────
       fill(45);
       textStyle(BOLD);
       textSize(17);
       textAlign(LEFT, TOP);
       rectMode(CORNER); 
       text(g.title, textX, y + 20);
-
-      // Description
       fill(100);
       textStyle(NORMAL);
       textSize(13);
@@ -616,8 +566,6 @@ class WelcomeScreen {
     return startY + cardH;
   }
 
-  // ─── Settings button ──────────────────────────────────────────────────────
-
   _settingsBtnBounds() {
     const size = 48;
     return {
@@ -654,8 +602,6 @@ class WelcomeScreen {
     if (hover) cursor(HAND);
   }
 
-  // ─── Start button ─────────────────────────────────────────────────────────
-
   drawStartButton(btnY, hoverStateName) {
     const L    = this.layout;
     const btnW = L.btnW;
@@ -666,15 +612,12 @@ class WelcomeScreen {
 
     push();
     rectMode(CORNER);
-
-    // Glow
     drawingContext.shadowBlur  = isHovering ? 28 : 12;
     drawingContext.shadowColor = isHovering ? "rgba(100,220,160,0.5)" : "rgba(80,160,255,0.3)";
 
     if (isHovering) {
       this[hoverStateName] = true;
       cursor(HAND);
-      // Bouncy outline
       noStroke();
       fill(100, 220, 160);
       rect(btnX - 3, btnY - 3, btnW + 6, btnH + 6, 32);
@@ -687,8 +630,6 @@ class WelcomeScreen {
     }
 
     drawingContext.shadowBlur = 0;
-
-    // Shine strip
     noStroke();
     fill(255, 50);
     rectMode(CORNER);
@@ -703,8 +644,6 @@ class WelcomeScreen {
     pop();
   }
 
-  // ─── Scrollbar ────────────────────────────────────────────────────────────
-
   drawScrollbar() {
     if (this.maxScroll <= 0) return;
     push();
@@ -718,8 +657,6 @@ class WelcomeScreen {
     pop();
   }
 
-  // ─── Click handling ───────────────────────────────────────────────────────
-
   handleClick() {
     this._syncLayout();
     const L    = this.layout;
@@ -727,22 +664,16 @@ class WelcomeScreen {
     const btnH = L.btnH;
     const btnX = width / 2 - btnW / 2;
     const vmY  = mouseY + this.scrollOffset;
-
-    // Settings
     const s = this._settingsBtnBounds();
     if (mouseX > s.x && mouseX < s.x + s.w && mouseY > s.y && mouseY < s.y + s.h) {
       if (typeof audioManager !== "undefined") audioManager.playSound("petal");
       gameState.setScreen(GAME_STATES.SETTINGS);
       return true;
     }
-
-    // Top CTA
     if (mouseX > btnX && mouseX < btnX + btnW && vmY > L.btnY && vmY < L.btnY + btnH) {
       this._triggerGameStart();
       return true;
     }
-
-    // Bottom CTA
     if (L.bottomBtnY && mouseX > btnX && mouseX < btnX + btnW && vmY > L.bottomBtnY && vmY < L.bottomBtnY + btnH) {
       this._triggerGameStart();
       return true;

@@ -25,15 +25,10 @@ class AudioManager {
   preload() {
     if (typeof loadSound !== "undefined") {
       try {
-        // Load the default music
         this.bgmTracks["menu"] = loadSound("assets/bg-music.mp3");
-        
-        // Load the game music
         this.bgmTracks["kaleido"] = loadSound("assets/kaleido-music.mp3");
         this.bgmTracks["jelly"] = loadSound("assets/jellyjams-music.mp3");
         this.bgmTracks["tiptoe"] = loadSound("assets/tiptoe-music.mp3");
-
-        // Load SFX
         this.petalSound = loadSound("assets/petal-click.mp3");
         this.cloudSound = loadSound("assets/cloud-transition.mp3"); 
       } catch (e) {

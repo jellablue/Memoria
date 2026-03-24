@@ -266,8 +266,6 @@ class JellyJams extends Game {
 
     push();
     textAlign(CENTER, CENTER);
-    
-    // Glassmorphism effect for the Top Banner
     drawingContext.shadowBlur = 20;
     drawingContext.shadowColor = "rgba(0,0,0,0.15)";
     
@@ -277,7 +275,7 @@ class JellyJams extends Game {
        rectMode(CENTER);
        rect(width / 2, topY, 400, 60, 30);
        
-       drawingContext.shadowBlur = 0; // Reset shadows for text
+       drawingContext.shadowBlur = 0;
        noStroke();
        fill(PALETTE?.purple || "#9B5DE5");
        textSize(22); textStyle(BOLD);
@@ -289,11 +287,10 @@ class JellyJams extends Game {
        rectMode(CENTER);
        rect(width / 2, topY, 440, 60, 30);
 
-       drawingContext.shadowBlur = 0; // Reset shadows for text
+       drawingContext.shadowBlur = 0;
        noStroke();
        
        if (this.isReverse) {
-         // Pulsing warning color for Reverse Mode
          let pulseRed = lerpColor(color("#D32F2F"), color("#FF5252"), (sin(frameCount * 0.1) + 1) / 2);
          fill(pulseRed);
          textSize(24); textStyle(BOLD);
@@ -305,21 +302,15 @@ class JellyJams extends Game {
        }
     }
     pop();
-
-    // --- LEFT HUD (Lives, Level, Score) ---
     push();
     let hudX = max(40, width * 0.05);
     let hudY = height / 2 - 100;
-
-    // Glassmorphism Base
     drawingContext.shadowBlur = 25;
     drawingContext.shadowColor = "rgba(0,0,0,0.1)";
     fill(255, 210); 
     stroke(255); 
     strokeWeight(2);
     rectMode(CORNER);
-    
-    // Expand the height dynamically if reverse mode is active
     let hudH = this.isReverse ? 250 : 210;
     rect(hudX, hudY, 160, hudH, 20); 
     
@@ -348,8 +339,6 @@ class JellyJams extends Game {
       text("⚠️ REVERSE ⚠️", hudX + 80, hudY + 215);
     }
     pop();
-
-    // Overlays
     if (this.gameState === "IDLE") this.drawPopupCard("Jelly Jams", "START GAME");
     else if (this.gameState === "RESULT") this.drawPopupCard("Level Complete!", "NEXT LEVEL >>");
     else if (this.gameState === "GAMEOVER") this.drawPopupCard("Game Over", "TRY AGAIN");
@@ -427,85 +416,57 @@ class JellyJams extends Game {
 
  drawBlu() {
     push();
-    // Smooth movement tracking
     translate(this.blu.x, this.blu.y);
-
-    // Drop Shadow
     noStroke(); 
     fill(0, 50); 
     ellipse(0, 20, 30, 10);
-
-    // Bounce effect based on distance to target
     let jumpHeight = dist(this.blu.x, this.blu.y, this.blu.targetX, this.blu.targetY);
     let bounce = min(jumpHeight * 0.4, 60);
     translate(0, -bounce);
-
-    // --- ANIMATION PARAMETERS ---
-    // Scale up the base size slightly for Jelly Jams visibility
     const bluSize = this.blu.size * 2.2; 
     const floatY  = sin(frameCount * 0.05) * 5; 
     const breath  = sin(frameCount * 0.08) * (bluSize * 0.03); 
     const armSwing = sin(frameCount * 0.1) * 12; 
-
-    // Reverse Mode "Panic" Modifier
     if (this.isReverse) {
-      rotate(sin(frameCount * 0.3) * 0.15); // Wobble side to side
+      rotate(sin(frameCount * 0.3) * 0.15);
     }
     
-    translate(0, floatY); // Apply floating
-
-    // 1. Glow Halo
+    translate(0, floatY);
     for (let g = 3; g > 0; g--) {
       noStroke();
       fill(100, 160, 255, 12 * g);
       circle(0, 0, bluSize + g * 12);
     }
-
-    // 2. Animated Arms (With Panic mode flailing!)
     let bodyColor = this.isReverse ? (PALETTE?.purple || color(195, 177, 225)) : (PALETTE?.blue || color(80, 160, 255));
     fill(bodyColor);
     noStroke();
-    
-    // Left Arm
     push();
     translate(-bluSize * 0.45, 0);
     rotate(radians(this.isReverse ? armSwing * 3 : armSwing - 20)); 
     ellipse(-bluSize * 0.1, 0, bluSize * 0.25, bluSize * 0.12);
     pop();
-
-    // Right Arm
     push();
     translate(bluSize * 0.45, 0);
     rotate(radians(this.isReverse ? -armSwing * 3 : -armSwing + 20));
     ellipse(bluSize * 0.1, 0, bluSize * 0.25, bluSize * 0.12);
     pop();
-
-    // 3. Main Body (Squircle)
     rectMode(CENTER);
     rect(0, 0, bluSize + breath, bluSize - breath, bluSize * 0.4);
-
-    // 4. Cheeks
     fill(255, 160, 180, 140);
     ellipse(-bluSize * 0.28, bluSize * 0.1, bluSize * 0.22, bluSize * 0.14);
     ellipse( bluSize * 0.28, bluSize * 0.1, bluSize * 0.22, bluSize * 0.14);
-
-    // 5. Eyes
-    fill(255); // Sclera
+    fill(255);
     ellipse(-bluSize * 0.18, -bluSize * 0.1, bluSize * 0.35, bluSize * 0.35);
     ellipse( bluSize * 0.18, -bluSize * 0.1, bluSize * 0.35, bluSize * 0.35);
     
-    fill(30); // Pupils
+    fill(30);
     if (this.isReverse) {
-      // Dizzy / Crossed eyes looking inward
       ellipse(-bluSize * 0.18 + sin(frameCount * 0.5) * 4, -bluSize * 0.1, bluSize * 0.15, bluSize * 0.15);
       ellipse( bluSize * 0.18 - sin(frameCount * 0.5) * 4, -bluSize * 0.1, bluSize * 0.15, bluSize * 0.15);
     } else {
-      // Normal looking eyes
       ellipse(-bluSize * 0.18, -bluSize * 0.1, bluSize * 0.18, bluSize * 0.18);
       ellipse( bluSize * 0.18, -bluSize * 0.1, bluSize * 0.18, bluSize * 0.18);
     }
-    
-    // Eye Shines (Disable complex shines if dizzy)
     if (!this.isReverse) {
         fill(255);
         ellipse(-bluSize * 0.13, -bluSize * 0.14, bluSize * 0.08, bluSize * 0.08);
@@ -513,8 +474,6 @@ class JellyJams extends Game {
         ellipse(-bluSize * 0.22, -bluSize * 0.06, bluSize * 0.03, bluSize * 0.03);
         ellipse( bluSize * 0.14, -bluSize * 0.06, bluSize * 0.03, bluSize * 0.03);
     }
-
-    // 6. Mouth / Expression
     if (this.isReverse) {
         noFill(); 
         stroke(30); 
@@ -526,8 +485,6 @@ class JellyJams extends Game {
         strokeWeight(max(2, bluSize * 0.035));
         arc(0, bluSize * 0.12 - (breath * 0.5), bluSize * 0.26, bluSize * 0.16, 0, PI); 
     }
-
-    // 7. Tiny Star Accessory
     noStroke();
     fill(255, 220, 60);
     push();
@@ -568,7 +525,7 @@ class JellyJams extends Game {
       let size = 100 + sin(frameCount * 0.02 + i) * 50;
 
       let col = color(colors[i % colors.length]);
-      col.setAlpha(30); // Very transparent to not distract from the game
+      col.setAlpha(30);
       
       fill(col);
       circle(x, y, size);

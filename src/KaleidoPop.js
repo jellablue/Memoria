@@ -22,8 +22,6 @@ class KaleidoPop extends Game {
     this.showMilestoneOverlay = false;
     this.milestoneMessage = "";
     this.rotationSpeedMultiplier = 1;
-    
-    // --- Visual Feedback States ---
     this.shakeTimer = 0;
     this.btnScale = 1.0; 
 
@@ -101,8 +99,6 @@ class KaleidoPop extends Game {
           correctCount++;
         }
       }
-
-      // FIXED LOGIC: Only proceed to RESULT if they got everything right.
       if (correctCount === this.petals.length) {
         this.totalScore += roundPoints;
 
@@ -116,9 +112,8 @@ class KaleidoPop extends Game {
         this.gameState = "RESULT";
         
       } else {
-        // MISTAKE LOGIC: Penalize and stay in INPUT mode to try again.
         this.lives--;
-        this.shakeTimer = 15; // Trigger camera shake
+        this.shakeTimer = 15;
         
         if (this.lives <= 0) {
           this.gameState = "GAMEOVER";
@@ -144,8 +139,8 @@ class KaleidoPop extends Game {
    if (this.level % 5 === 1 && this.level > 1) {
       this.showMilestoneOverlay = true;
       this.milestoneMessage = "Great memory! Let's add more petals.";
-      this.milestoneAnim = 0; // Reset animation scaler
-      this.initConfetti();    // Boom!
+      this.milestoneAnim = 0;
+      this.initConfetti();
     }
 
     let rotationStartLevel = this.getRotationStartLevel();
@@ -172,8 +167,6 @@ class KaleidoPop extends Game {
     }
 
     this.drawDynamicBackground();
-
-    // 1. Draw UI (Doesn't shake)
     this.handleUI();
 
     let mx = mouseX - width / 2;
@@ -188,8 +181,6 @@ class KaleidoPop extends Game {
 
     push();
     translate(width / 2, height / 2);
-
-    // 2. Camera Shake Matrix (Only affects the Mandala)
     if (this.shakeTimer > 0) {
       translate(random(-6, 6), random(-6, 6));
       this.shakeTimer--;
@@ -239,8 +230,6 @@ class KaleidoPop extends Game {
     ellipse(0, 0, 60, 60);
     drawingContext.shadowBlur = 0;
     pop();
-
-    // 3. Draw Overlays
     if (this.gameState === "RESULT") {
       this.drawPopupCard("Level Complete!", "NEXT LEVEL >>");
     } else if (this.gameState === "GAMEOVER") {
@@ -252,8 +241,6 @@ class KaleidoPop extends Game {
     textAlign(CENTER, CENTER);
     if (this.gameState === "MEMORIZE") {
       this.timer--;
-      
-      // Title with subtle glowing shadow
       drawingContext.shadowBlur = 10;
       drawingContext.shadowColor = "rgba(255,255,255,0.8)";
       fill(80);
@@ -264,13 +251,9 @@ class KaleidoPop extends Game {
       let barW = 340;
       let fillW = map(this.timer, 0, this.timerMax, 0, barW);
       noStroke();
-      
-      // Timer Track Background
       fill(220, 150);
       rectMode(CORNER);
       rect(width/2 - barW/2, 90, barW, 12, 6);
-      
-      // Timer Fill (Color changes based on time left)
       let timerColor = this.timer < 60 ? (PALETTE?.pink || "#F6C0D9") : (PALETTE?.blue || "#B5CDF5");
       fill(timerColor);
       rect(width/2 - barW/2, 90, fillW, 12, 6);
@@ -288,20 +271,16 @@ class KaleidoPop extends Game {
       textSize(16); textStyle(NORMAL); fill(100);
       text("Press ENTER when finished", width / 2, 95);
     }
-
-    // --- LEFT HUD (Lives, Level, Score) ---
     push();
     let hudX = max(40, width * 0.05);
     let hudY = height / 2 - 100;
-
-    // Glassmorphism Base
     drawingContext.shadowBlur = 25;
     drawingContext.shadowColor = "rgba(0,0,0,0.1)";
-    fill(255, 210); // Slightly transparent white
-    stroke(255); // Solid white rim light
+    fill(255, 210);
+    stroke(255);
     strokeWeight(2);
     rectMode(CORNER);
-    rect(hudX, hudY, 160, 210, 20); // Taller to fit spacing better
+    rect(hudX, hudY, 160, 210, 20);
     
     drawingContext.shadowBlur = 0;
     noStroke();
@@ -322,35 +301,29 @@ class KaleidoPop extends Game {
     textSize(28); fill(PALETTE?.green || "#5DC98A");
     text(this.totalScore, hudX + 25, hudY + 170);
     pop();
-
-    // --- RIGHT HUD (Palette Selection) ---
     if (this.gameState === "INPUT") {
       push();
       let spacing = 65;
       let rightX = width - 80;
       let startY = height / 2 - ((this.palette.length - 1) * spacing) / 2;
-
-      // Glassmorphism Base for Palette
       drawingContext.shadowBlur = 25;
       drawingContext.shadowColor = "rgba(0,0,0,0.1)";
       fill(255, 210);
       stroke(255);
       strokeWeight(2);
       rectMode(CORNER);
-      rect(rightX - 45, startY - 45, 90, (this.palette.length * spacing) + 30, 45); // Pill shape
+      rect(rightX - 45, startY - 45, 90, (this.palette.length * spacing) + 30, 45);
 
       for (let i = 0; i < this.palette.length; i++) {
         let py = startY + i * spacing;
         let isSelected = (this.selectedBrushColor === this.palette[i]);
-
-        // Enhanced Selection Glow
         drawingContext.shadowBlur = isSelected ? 20 : 5;
         drawingContext.shadowColor = isSelected ? this.palette[i] : "rgba(0,0,0,0.15)";
 
         fill(this.palette[i]);
         if (isSelected) {
           stroke(255); strokeWeight(5);
-          circle(rightX, py, 48); // Slightly larger when selected
+          circle(rightX, py, 48);
         } else {
           stroke(230); strokeWeight(2);
           circle(rightX, py, 38);
@@ -363,18 +336,15 @@ class KaleidoPop extends Game {
 
   checkClick() {
     if (this.showMilestoneOverlay) {
-      // Prevent clicking if the card is still animating in
       if (this.milestoneAnim < 0.9) return; 
 
       let btnW = 220, btnH = 54;
-      // Because the card is drawn from center, btnY is exactly 100 pixels below the middle of the screen
       let absoluteBtnY = height / 2 + 100; 
       
       if (mouseX > width/2 - btnW/2 && mouseX < width/2 + btnW/2 && 
           mouseY > absoluteBtnY - btnH/2 && mouseY < absoluteBtnY + btnH/2) {
         if (typeof audioManager !== "undefined") audioManager.playSound("petal");
         this.showMilestoneOverlay = false;
-        // Reset the timer when they close the overlay so they don't lose time
         this.levelStartMillis = millis();
       }
       return;
@@ -386,8 +356,6 @@ class KaleidoPop extends Game {
     }
 
     if (this.gameState !== "INPUT") return;
-
-    // Palette Clicks
     let spacing = 65;
     let rightX = width - 80;
     let startY = height / 2 - ((this.palette.length - 1) * spacing) / 2;
@@ -400,8 +368,6 @@ class KaleidoPop extends Game {
         return;
       }
     }
-
-    // Petal Clicks
     let mx = mouseX - width / 2;
     let my = mouseY - height / 2;
     let distFromCenter = dist(0, 0, mx, my);
@@ -477,7 +443,7 @@ class KaleidoPop extends Game {
       rectMode(CENTER); rect(0, 0, btnW, btnH, 25); rectMode(CORNER);
       drawingContext.shadowBlur = 0;
       fill(isHovered ? 255 : 250); textSize(18); textStyle(BOLD);
-      text(btnLabel, 0, 1); // Vertically centered tweak
+      text(btnLabel, 0, 1);
       pop();
   }
 
@@ -491,21 +457,14 @@ class KaleidoPop extends Game {
   }
 
   drawMilestoneOverlay() {
-      // 1. Smooth Spring Animation for the pop-in
       this.milestoneAnim = lerp(this.milestoneAnim, 1.0, 0.15);
-
-      // 2. Dim Background (Fades in smoothly)
       fill(0, 150 * this.milestoneAnim); 
       noStroke(); rectMode(CORNER); 
       rect(0, 0, width, height);
-
-      // 3. Draw and Update Confetti Physics!
       for (let i = this.confetti.length - 1; i >= 0; i--) {
         let p = this.confetti[i];
-        
-        // Apply Gravity and Friction
-        p.vy += 0.4; // Gravity pulling down
-        p.vx *= 0.98; // Air resistance slowing horizontal movement
+        p.vy += 0.4;
+        p.vx *= 0.98;
         
         p.x += p.vx;
         p.y += p.vy;
@@ -517,60 +476,41 @@ class KaleidoPop extends Game {
         fill(p.color);
         noStroke();
         rectMode(CENTER);
-        // Make the confetti "flutter" in 3D by squishing its height
         rect(0, 0, p.size, p.size * abs(sin(frameCount * 0.1 + p.spin * 10))); 
         pop();
-
-        // Remove off-screen confetti
         if (p.y > height + 20) this.confetti.splice(i, 1);
       }
-
-      // 4. Draw the Card (Using Matrix Transformation to pop it in)
-      let cardW = 500, cardH = 340; // Slightly taller to fit the nice graphics
+      let cardW = 500, cardH = 340;
       let btnW = 220, btnH = 54;
-      let btnY = 100; // Relative to the center of the card
+      let btnY = 100;
 
       push();
       translate(width / 2, height / 2);
-      scale(this.milestoneAnim); // The whole card pops in!
-
-      // Card Body
+      scale(this.milestoneAnim);
       drawingContext.shadowBlur = 40; 
       drawingContext.shadowColor = "rgba(0,0,0,0.3)";
       fill(255); 
       rectMode(CENTER); 
       rect(0, 0, cardW, cardH, 25);
       drawingContext.shadowBlur = 0; 
-
-      // Hero Title
-      fill(PALETTE?.yellow || "#FFD580"); // Gold shadow
+      fill(PALETTE?.yellow || "#FFD580");
       textSize(42); textStyle(BOLD); textAlign(CENTER, CENTER);
-      text("🌟 LEVEL UP! 🌟", 2, -108); // Slight offset for 3D sticker effect
-      fill(PALETTE?.purple || "#9B5DE5"); // Main text
+      text("🌟 LEVEL UP! 🌟", 2, -108);
+      fill(PALETTE?.purple || "#9B5DE5");
       text("🌟 LEVEL UP! 🌟", 0, -110);
-
-      // Subtitle Message
       fill(80); textSize(18); textStyle(NORMAL);
       text(this.milestoneMessage, 0, -60);
-
-      // Stat Circles (Cute way to display Level and Score)
       let statY = -5;
-      
-      // Level Circle
       fill(245, 248, 255); stroke(PALETTE?.blue || "#B5CDF5"); strokeWeight(3);
       circle(-80, statY, 80);
       noStroke(); fill(120); textSize(12); textStyle(BOLD); text("LEVEL", -80, statY - 15);
       fill(PALETTE?.blue || "#5BACE0"); textSize(28); text(this.level, -80, statY + 10);
-
-      // Score Circle
       stroke(PALETTE?.green || "#A0EACD"); strokeWeight(3); fill(245, 248, 255);
       circle(80, statY, 80);
       noStroke(); fill(120); textSize(12); textStyle(BOLD); text("SCORE", 80, statY - 15);
       fill(PALETTE?.green || "#5DC98A"); textSize(24); text(this.totalScore, 80, statY + 10);
-
-      // The Button
       let isHovered = false;
-      if (this.milestoneAnim > 0.9) { // Only allow hover once the card is fully popped in
+      if (this.milestoneAnim > 0.9) {
         let relativeMouseX = mouseX - width / 2;
         let relativeMouseY = mouseY - height / 2;
         isHovered = relativeMouseX > -btnW/2 && relativeMouseX < btnW/2 && 
@@ -592,49 +532,36 @@ class KaleidoPop extends Game {
       drawingContext.shadowBlur = 0;
       fill(isHovered ? 255 : 250); textSize(20); textStyle(BOLD);
       text("CONTINUE", 0, 1);
-      pop(); // End Button
+      pop();
 
-      pop(); // End Card
+      pop();
   }
 
   drawDynamicBackground() {
     push();
-    // 1. Center the coordinate system for the background
     translate(width / 2, height / 2);
-    
-    // 2. Base ambient rotation (very slow)
     rotate(frameCount * 0.0005);
 
     noFill();
     strokeWeight(2);
-
-    // 3. Generate concentric, geometric rings
     let rings = 6;
     let maxRadius = (width > height ? width : height) * 0.6; 
     
     for (let i = 1; i <= rings; i++) {
       let baseRadius = (maxRadius / rings) * i;
-      
-      // Calculate opacity: Outer rings are more faded
       let alpha = map(i, 1, rings, 50, 5); 
-      
-      // Inherit the game's color palette to keep the theme cohesive
       let col = color(this.palette[i % this.palette.length]);
       col.setAlpha(alpha);
       stroke(col);
 
       push();
-      // Each ring rotates at slightly different speeds and directions
       let ringRotation = i % 2 === 0 ? (frameCount * 0.001 * i) : (-frameCount * 0.001 * i);
       rotate(ringRotation);
-      
-      // Determine the number of vertices for the polygon (creates a star/gem shape)
       let points = 6 + (i * 2); 
       let angleStep = TWO_PI / points;
 
       beginShape();
       for (let a = 0; a < TWO_PI; a += angleStep) {
-        // Parametric pulse: The radius breathes slightly over time
         let pulseR = baseRadius + sin(frameCount * 0.02 + i) * 15;
         let x = cos(a) * pulseR;
         let y = sin(a) * pulseR;

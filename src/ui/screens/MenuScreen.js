@@ -12,16 +12,11 @@ class MenuScreen {
   }
 
   _getStarCardMetrics() {
-    // FIXED: Increased breakpoint to 1100px. 
-    // This ensures that when the buttons are dead-center, the StarBank 
-    // card won't overlap them on medium-sized screens (like tablets).
     const isNarrow = width < 1100; 
     
     const pad = constrain(width * 0.02, 10, 24);
-    const cardW = constrain(width * (isNarrow ? 0.8 : 0.25), 260, 320); // Slightly refined max-width
+    const cardW = constrain(width * (isNarrow ? 0.8 : 0.25), 260, 320);
     const cardH = constrain(height * 0.35, 240, 280);
-
-    // On narrow screens, it anchors to the bottom center. On wide screens, top right.
     const x = isNarrow ? (width / 2 - cardW / 2) : (width - cardW - pad);
     const y = isNarrow ? (height - cardH - pad) : pad;
 
@@ -37,8 +32,6 @@ class MenuScreen {
     const btnW = constrain(width * 0.36, 260, 380);
     const btnH = constrain(height * 0.12, 76, 96);
     const gap = constrain(height * 0.03, 16, 26);
-
-    // FIXED: Unconditionally set the buttons and title to the dead center of the screen
     const centerX = width / 2;
 
     this.layout = {
@@ -48,7 +41,6 @@ class MenuScreen {
       centerX,
       titleY: height * 0.18,
       subtitleY: height * 0.26,
-      // Shift buttons slightly up on mobile to avoid hitting the StarBank card
       startY: m.isNarrow ? height * 0.32 : height * 0.36, 
       titleSize: constrain(base * 0.08, 38, 72),
       subtitleSize: constrain(base * 0.04, 20, 36),

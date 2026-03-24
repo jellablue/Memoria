@@ -8,13 +8,11 @@ class SummaryCard {
     this.animFrames   = 24;
     this.startOffsetY = max(height * 0.9, 520);
     this.animComplete = false;
-    
-    // Button hover animations
     this.btn1Scale = 1.0;
     this.btn2Scale = 1.0;
 
     this.CARD_W = constrain(width * 0.85, 340, 480);
-    this.CARD_H = 460; // Fixed height prevents text overlap
+    this.CARD_H = 460;
     this._lastMetrics = null;
 
     this._NAMES = {
@@ -108,8 +106,6 @@ class SummaryCard {
       push();
       try {
         translate(cx, cy + offsetY);
-
-        // Main Card 
         drawingContext.shadowBlur = 30;
         drawingContext.shadowColor = "rgba(0,0,0,0.2)";
         fill(255);
@@ -130,14 +126,10 @@ class SummaryCard {
         textStyle(NORMAL);
         textSize(16);
         text(this._NAMES[this.gameKey] || "Game Over", 0, metrics.gameY);
-
-        // Top Divider
         stroke(230);
         strokeWeight(2);
         strokeCap(ROUND);
         line(-metrics.lineHalf, metrics.dividerTopY, metrics.lineHalf, metrics.dividerTopY);
-
-        // Stat Rows 
         const recordKey = this.gameKey + "Record";
         const record = (typeof starBank !== 'undefined') ? (starBank[recordKey] || 0) : 0;
         const isNewRecord = record > 0 && this.sessionScore >= record;
@@ -151,14 +143,10 @@ class SummaryCard {
           metrics
         );
         this._statRow(0, metrics.row3Y, "🌟 Grand Total", totalStars + " stars", PALETTE?.purple || "#9B5DE5", metrics);
-
-        // Bottom Divider
         stroke(230);
         strokeWeight(2);
         line(-metrics.lineHalf, metrics.dividerBottomY, metrics.lineHalf, metrics.dividerBottomY);
         noStroke();
-
-        // Level Badge
         const badgeY = metrics.badgeY;
         fill(typeof starBank !== 'undefined' ? starBank.getLevelBadgeColor() : "#FFB7B2");
         rectMode(CENTER);
@@ -170,15 +158,11 @@ class SummaryCard {
         textStyle(BOLD);
         textSize(16);
         text(typeof starBank !== 'undefined' ? starBank.getLevel() : "Level 1", 0, badgeY + 1);
-
-        // Interactive Buttons
         const h1 = this._isHover(metrics.btn1X, metrics.btnY, metrics.btnW, metrics.btnH, offsetY);
         const h2 = this._isHover(metrics.btn2X, metrics.btnY, metrics.btnW, metrics.btnH, offsetY);
 
         this.btn1Scale = lerp(this.btn1Scale, h1 ? 1.08 : 1.0, 0.2);
         this.btn2Scale = lerp(this.btn2Scale, h2 ? 1.08 : 1.0, 0.2);
-
-        // Play Again Button
         push();
         translate(metrics.btn1X, metrics.btnY);
         scale(this.btn1Scale);
@@ -194,14 +178,12 @@ class SummaryCard {
         textStyle(BOLD);
         text("PLAY AGAIN", 0, 1);
         pop();
-
-        // Main Menu Button
         push();
         translate(metrics.btn2X, metrics.btnY);
         scale(this.btn2Scale);
         drawingContext.shadowBlur = h2 ? 15 : 5;
         drawingContext.shadowColor = "rgba(0,0,0,0.15)";
-        fill(h2 ? "#D0D5E0" : "#E8EAF6"); // Soft grey
+        fill(h2 ? "#D0D5E0" : "#E8EAF6");
         rectMode(CENTER);
         rect(0, 0, metrics.btnW, metrics.btnH, 25);
         drawingContext.shadowBlur = 0;
@@ -246,15 +228,11 @@ class SummaryCard {
 
   _statRow(cx, y, label, value, valueColor, metrics) {
     noStroke();
-    
-    // Left Label
     fill(100);
     textSize(18);
     textStyle(BOLD);
     textAlign(LEFT, CENTER);
     text(label, cx + metrics.statsLeftX, y);
-
-    // Right Value
     fill(valueColor || PALETTE?.text || "#5D5D5D");
     textSize(18);
     textStyle(BOLD);

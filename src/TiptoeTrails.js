@@ -258,8 +258,6 @@ class TiptoeTrails extends Game {
 
     push();
     textAlign(CENTER, CENTER);
-    
-    // Glassmorphism effect for the Top Banner
     drawingContext.shadowBlur = 20;
     drawingContext.shadowColor = "rgba(0,0,0,0.15)";
     
@@ -269,13 +267,11 @@ class TiptoeTrails extends Game {
        rectMode(CENTER);
        rect(width / 2, topY, 350, 60, 30);
        
-       drawingContext.shadowBlur = 0; // Reset shadows for text
+       drawingContext.shadowBlur = 0;
        noStroke();
        fill(PALETTE?.blue || "#5BACE0");
        textSize(22); textStyle(BOLD);
        text("Memorize the path...", width / 2, topY);
-
-       // --- PROGRESS BAR (Moved from Logic to UI) ---
        let totalTime = (this.path.length * this.stepInterval) + 40;
        let barMaxW = 400;
        let barW = map(this.previewTimer, 0, totalTime, 0, barMaxW);
@@ -283,13 +279,9 @@ class TiptoeTrails extends Game {
        drawingContext.shadowBlur = 10;
        drawingContext.shadowColor = "rgba(255,255,255,0.8)";
        noStroke(); 
-       
-       // Bar Background
        fill(220, 150);
        rectMode(CORNER);
        rect(width / 2 - barMaxW/2, height - 50, barMaxW, 12, 6);
-       
-       // Bar Fill
        fill(PALETTE?.blue || "#B5CDF5");
        rect(width / 2 - barMaxW/2, height - 50, barW, 12, 6);
        drawingContext.shadowBlur = 0;
@@ -300,20 +292,16 @@ class TiptoeTrails extends Game {
        rectMode(CENTER);
        rect(width / 2, topY, 350, 60, 30);
        
-       drawingContext.shadowBlur = 0; // Reset shadows for text
+       drawingContext.shadowBlur = 0;
        noStroke();
        fill(PALETTE?.green || "#5DC98A");
        textSize(24); textStyle(BOLD);
        text("Retrace the steps!", width / 2, topY);
     }
     pop();
-
-    // --- LEFT HUD (Lives, Level, Score) ---
     push();
     let hudX = max(40, width * 0.05);
     let hudY = height / 2 - 100;
-
-    // Glassmorphism Base
     drawingContext.shadowBlur = 25;
     drawingContext.shadowColor = "rgba(0,0,0,0.1)";
     fill(255, 210); 
@@ -398,15 +386,10 @@ class TiptoeTrails extends Game {
 
 drawDynamicBackground() {
     push();
-    
-    // 1. A soft, airy Wonderland daytime background (Very Pale Blue/Lavender)
-    // This creates a bright canvas that perfectly supports white glassmorphism UI
     fill(245, 248, 255); 
     noStroke();
     rectMode(CORNER);
     rect(0, 0, width, height);
-
-    // 2. Initialize soft floating memory orbs (only once)
     if (!this.bgNodes) {
       this.bgNodes = [];
       let memoryColors = [
@@ -417,50 +400,38 @@ drawDynamicBackground() {
         PALETTE?.purple || "#C3B1E1"
       ];
       
-      for (let i = 0; i < 30; i++) { // Slightly fewer nodes so it isn't cluttered
+      for (let i = 0; i < 30; i++) {
         this.bgNodes.push({
           x: random(width), 
           y: random(height),
           seedX: random(1000), 
           seedY: random(1000),
-          baseSize: random(12, 28), // Larger, softer bubbles
+          baseSize: random(12, 28),
           color: color(random(memoryColors))
         });
       }
     }
-
-    // 3. Update and draw the floating pastel memory orbs
     for (let i = 0; i < this.bgNodes.length; i++) {
       let n1 = this.bgNodes[i];
-      
-      // Slower, dreamy organic floating
       n1.x += sin(frameCount * 0.005 + n1.seedX) * 0.8;
       n1.y += cos(frameCount * 0.007 + n1.seedY) * 0.8;
-      
-      // Wrap around gently
       if (n1.x < -40) n1.x = width + 40;
       if (n1.x > width + 40) n1.x = -40;
       if (n1.y < -40) n1.y = height + 40;
       if (n1.y > height + 40) n1.y = -40;
-
-      // Draw Wisp (Semi-transparent pastel so it sits softly in the background)
       let c = color(n1.color.toString());
-      c.setAlpha(100); // 100/255 opacity = very soft
+      c.setAlpha(100);
       fill(c);
       noStroke();
       
       let currentSize = n1.baseSize + sin(frameCount * 0.03 + n1.seedX) * 5;
       circle(n1.x, n1.y, currentSize);
-
-      // 4. Memory Threads (Soft, subtle connections)
       for (let j = i + 1; j < this.bgNodes.length; j++) {
         let n2 = this.bgNodes[j];
         let d = dist(n1.x, n1.y, n2.x, n2.y);
-        
-        // If orbs are close, draw a soft thread between them
         if (d < 140) {
-          let alpha = map(d, 0, 140, 60, 0); // Very low opacity (max 60) for subtlety
-          stroke(180, 190, 230, alpha); // Soft pastel periwinkle line
+          let alpha = map(d, 0, 140, 60, 0);
+          stroke(180, 190, 230, alpha);
           strokeWeight(2);
           line(n1.x, n1.y, n2.x, n2.y);
         }

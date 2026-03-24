@@ -11,36 +11,16 @@ const starBank = {
     tiptoe:  { bestScore: 0, totalScore: 0, playCount: 0 },
   },
   sessionDeltas: { kaleido: null, jelly: null, tiptoe: null },
-
-  // --- Session tracking (rolling window of last 3 sessions per game) ---
   sessionScores: { kaleido: [], jelly: [], tiptoe: [] },
-
-  // --- Streak tracking ---
-  // FIX 3: consecutiveFlawless is now reset inside addStarsFromSession via
-  // resetSession(), so a streak from a previous game can never bleed into the next.
   consecutiveFlawless: 0,
   STREAK_THRESHOLD:    3,
   STREAK_BONUS:        15,
-
-  // --- Stars earned this session (used for accurate pop animation) ---
-  // FIX 2: track streak stars accumulated during a session so the pop anim
-  // and return value reflect the true session total, not just baseStars.
   _sessionStreakStars: 0,
-
-  // --- Cognitive mastery targets (score needed for 100%) ---
   COGNITIVE_CAP: { kaleido: 200, jelly: 150, tiptoe: 150 },
-
-  // FIX 1: maximum level that contributes to the depth bonus.
-  // Levels beyond this still count for gameplay but don't inflate stars further.
   MAX_DEPTH_LEVEL: 10,
 
   popAnim:    { active: false, timer: 0, amount: 0, x: 0, y: 0 },
   streakAnim: { active: false, timer: 0 },
-
-  // ─────────────────────────────────────────
-  // STAR CONVERSION
-  // Stars = floor(score × depthBonus × accuracyMultiplier) + streakBonuses
-  // ─────────────────────────────────────────
 
   /**
    * Main entry point called by GameScreen at session end.
@@ -51,24 +31,19 @@ const starBank = {
    * @returns {number}            - Total stars earned this session (base + streak)
    */
   addStarsFromSession(score, maxLevel, livesLost, gameKey) {
-    // FIX 3: reset streak state at the start of every new session so no bleed-over.
     this.resetSession();
 
     const depthBonus   = this._depthBonus(maxLevel);
     const accuracyMult = this._accuracyMultiplier(livesLost);
     const baseStars    = Math.floor(score * depthBonus * accuracyMult);
-
-    // FIX 2: include streak stars accumulated during this session in the total.
     const totalEarned = baseStars + this._sessionStreakStars;
-    this.totalStars  += baseStars; // streak stars were already added in recordLevelComplete()
-
-    // Track session score for cognitive profile recent-window averaging.
+    this.totalStars  += baseStars;
     this._pushSessionScore(gameKey, score);
 
     this.popAnim = {
       active:     true,
       timer:      0,
-      amount:     totalEarned,   // now reflects the true session total
+      amount:     totalEarned,
       perfectRun: livesLost === 0,
       x:          width  / 2,
       y:          height / 2 - 60,
@@ -87,7 +62,7 @@ const starBank = {
       this.consecutiveFlawless++;
       if (this.consecutiveFlawless > 0 && this.consecutiveFlawless % this.STREAK_THRESHOLD === 0) {
         this.totalStars         += this.STREAK_BONUS;
-        this._sessionStreakStars += this.STREAK_BONUS; // FIX 2: track for pop anim
+        this._sessionStreakStars += this.STREAK_BONUS;
         this.streakAnim          = { active: true, timer: 0 };
       }
     } else {
@@ -105,15 +80,11 @@ const starBank = {
     const SPEED_THRESHOLD = 0.75;
     if (timeTaken <= timeAllowed * SPEED_THRESHOLD) {
       this.totalStars         += SPEED_BONUS;
-      this._sessionStreakStars += SPEED_BONUS; // also surfaces in pop anim total
+      this._sessionStreakStars += SPEED_BONUS;
       return SPEED_BONUS;
     }
     return 0;
   },
-
-  // ─────────────────────────────────────────
-  // INTERNAL HELPERS
-  // ─────────────────────────────────────────
 
   /**
    * FIX 1: Depth bonus is now capped at MAX_DEPTH_LEVEL (10).
@@ -148,7 +119,6 @@ const starBank = {
     const arr = this.sessionScores[gameKey];
     const cap = this.COGNITIVE_CAP[gameKey] || 1;
     if (!arr.length) {
-      // Fall back to lifetime avg if we have no recent-session data.
       return this._computeAverageScore(this.brainStats[gameKey] || this._defaultStat());
     }
     const raw = arr.reduce((a, b) => a + b, 0) / arr.length;
@@ -203,17 +173,12 @@ const starBank = {
     const g         = this.brainStats[gameKey] || this._defaultStat();
     const safeScore = max(0, Number(newScore) || 0);
     const cap       = this.COGNITIVE_CAP[gameKey] || 1;
-
-    // FIX 4: cap the score BEFORE using it anywhere — including the delta calc.
     const cappedScore  = min(safeScore, cap);
     const previousBest = g.bestScore;
 
     g.bestScore   = max(g.bestScore, cappedScore);
     g.totalScore += cappedScore;
     g.playCount  += 1;
-
-    // FIX 4: both previousBest and cappedScore are already capped, so the
-    // delta can never report a percentage above 100 or a misleading gain.
     const previousBestPct = constrain((previousBest / cap) * 100, 0, 100);
     const latestPct       = constrain((cappedScore   / cap) * 100, 0, 100);
     const deltaPct        = Math.round(latestPct - previousBestPct);
@@ -272,10 +237,6 @@ const starBank = {
     return "You are improving. Keep playing to build both peak and consistency.";
   },
 
-  // ─────────────────────────────────────────
-  // RECORDS
-  // ─────────────────────────────────────────
-
   updateRecord(gameKey, score) {
     this._ensureStatsLoaded();
     const key = gameKey + "Record";
@@ -285,10 +246,6 @@ const starBank = {
     }
     return false;
   },
-
-  // ─────────────────────────────────────────
-  // LEVEL & BADGE
-  // ─────────────────────────────────────────
 
   getLevel() {
     if (this.totalStars < 1000) return "Newbie";
@@ -302,11 +259,6 @@ const starBank = {
     return "#FDFD96";
   },
 
-  // ─────────────────────────────────────────
-  // COGNITIVE PROFILE
-  // Returns all data the ProfileScreen needs.
-  // ─────────────────────────────────────────
-
   getCognitiveScores() {
     this._ensureStatsLoaded();
 
@@ -314,15 +266,9 @@ const starBank = {
     const k   = this.brainStats.kaleido || this._defaultStat();
     const j   = this.brainStats.jelly   || this._defaultStat();
     const t   = this.brainStats.tiptoe  || this._defaultStat();
-
-    // FIX 5: _computeScore and _computeConsistency now receive gameKey so they
-    // can pull from the rolling session window via _recentAvgScore.
     const visual   = this._computeScore(k, cap.kaleido, "kaleido");
     const auditory = this._computeScore(j, cap.jelly,   "jelly");
     const spatial  = this._computeScore(t, cap.tiptoe,  "tiptoe");
-
-    // FIX 5: sessionXxx fields now use the rolling recent average, not the
-    // lifetime mean, giving the ProfileScreen an accurate "recent form" value.
     const visualRecentAvg   = this._recentAvgScore("kaleido");
     const auditoryRecentAvg = this._recentAvgScore("jelly");
     const spatialRecentAvg  = this._recentAvgScore("tiptoe");
@@ -387,10 +333,6 @@ const starBank = {
     return this.sessionDeltas[gameKey] ?? null;
   },
 
-  // ─────────────────────────────────────────
-  // ANIMATIONS
-  // ─────────────────────────────────────────
-
   drawPopAnim() {
     if (!this.popAnim.active) return;
 
@@ -453,10 +395,6 @@ const starBank = {
     text("\uD83D\uDD25 Flawless streak! +" + this.STREAK_BONUS + "\u2B50", width / 2, height / 2 - 120 + yOff);
     pop();
   },
-
-  // ─────────────────────────────────────────
-  // RESET
-  // ─────────────────────────────────────────
 
   /** Full reset (e.g. new player profile). */
   reset() {

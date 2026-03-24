@@ -33,22 +33,17 @@ class InstructionOverlay {
     const { boxW, boxH } = this.layout;
 
     this.animT = lerp(this.animT, 1.0, 0.15);
-
-    // 1. Isolate the background dimming to cover the whole screen securely
     push();
     resetMatrix(); 
     noStroke();
-    fill(0, 180 * this.animT); // Slightly darker for better text contrast
+    fill(0, 180 * this.animT);
     rectMode(CORNER);
     rect(0, 0, width, height);
     pop();
 
     push();
-    // Establish our center coordinate system
     translate(width / 2, height / 2);
     scale(this.animT);
-
-    // 2. Main Card Base
     drawingContext.shadowBlur = 40;
     drawingContext.shadowColor = 'rgba(0,0,0,0.3)';
     fill(255);
@@ -59,23 +54,17 @@ class InstructionOverlay {
 
     drawingContext.shadowBlur = 0;
     noStroke();
-
-    // 3. Title (Perfectly Centered)
     fill(PALETTE?.purple || "#9B5DE5");
     textSize(constrain(boxW * 0.07, 26, 36));
     textStyle(BOLD);
     textAlign(CENTER, CENTER);
     text(this.info.title, 0, -boxH / 2 + 45);
-
-    // Decorative Separator Line
     stroke(230);
     strokeWeight(2);
     strokeCap(ROUND);
     line(-boxW * 0.3, -boxH / 2 + 80, boxW * 0.3, -boxH / 2 + 80);
     noStroke();
-
-    // 4. Instructions (Centered Typography Stack)
-    fill(60); // Darker gray for better legibility
+    fill(60);
     textSize(constrain(boxW * 0.038, 16, 20));
     textStyle(NORMAL);
     textAlign(CENTER, TOP);
@@ -84,18 +73,10 @@ class InstructionOverlay {
     let stepSpacing = constrain(boxH * 0.12, 45, 65);
 
     for (let i = 0; i < this.info.steps.length; i++) {
-      // Centered decorative dot above each step
-      // fill(PALETTE?.pink || "#FFB7B2");
-      // circle(0, stepStartY + i * stepSpacing, 8);
-
-      // Centered Text Bounding Box
       fill(60);
       rectMode(CENTER);
-      // By using x=0 and a width boundary (boxW * 0.8), p5.js auto-wraps and centers the text!
       text(this.info.steps[i], 0, stepStartY + i * stepSpacing + 15, boxW * 0.8);
     }
-
-    // 5. Science Fact (Bottom Centered)
     fill(120);
     textSize(constrain(boxW * 0.03, 13, 15));
     textStyle(ITALIC);
@@ -122,16 +103,12 @@ class InstructionOverlay {
         relativeMouseY > btnY - btnH / 2 && relativeMouseY < btnY + btnH / 2
       );
     }
-
-    // Parametric Animation: Continuous "Breathing" Pulse
     let pulse = 1.0 + sin(frameCount * 0.05) * 0.02;
     this.btnScale = lerp(this.btnScale, isHovered ? 1.08 : pulse, 0.2);
 
     push();
     translate(0, btnY);
     scale(this.btnScale);
-
-    // Dynamic shadow that glows green when hovered
     drawingContext.shadowBlur = isHovered ? 25 : 12;
     drawingContext.shadowColor = isHovered ? "rgba(93,201,138,0.4)" : "rgba(0,0,0,0.15)";
 
