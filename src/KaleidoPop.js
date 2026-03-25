@@ -28,6 +28,10 @@ class KaleidoPop extends Game {
     this.milestoneAnim = 0; 
     this.confetti = [];
 
+    this.blu = {
+      x: 0, y: 0, targetX: 0, targetY: 0, size: 40,
+    };
+
     this.generateMandala();
   }
 
@@ -167,6 +171,7 @@ class KaleidoPop extends Game {
     }
 
     this.drawDynamicBackground();
+    this.updateBlu();
     this.handleUI();
 
     let mx = mouseX - width / 2;
@@ -230,11 +235,116 @@ class KaleidoPop extends Game {
     ellipse(0, 0, 60, 60);
     drawingContext.shadowBlur = 0;
     pop();
+
+    this.drawBlu();
+
     if (this.gameState === "RESULT") {
       this.drawPopupCard("Level Complete!", "NEXT LEVEL >>");
     } else if (this.gameState === "GAMEOVER") {
       this.drawPopupCard("Game Over", "FINISH");
     }
+  }
+
+  updateBlu() {
+    if (this.gameState === "RESULT" || this.gameState === "GAMEOVER") {
+      this.blu.targetX = width / 2;
+      this.blu.targetY = height / 2 - 180;
+    } else if (this.gameState === "INPUT") {
+      this.blu.targetX = width * 0.2;
+      this.blu.targetY = height * 0.82;
+    } else {
+      this.blu.targetX = width * 0.22;
+      this.blu.targetY = height * 0.75;
+    }
+
+    this.blu.x = lerp(this.blu.x, this.blu.targetX, 0.15);
+    this.blu.y = lerp(this.blu.y, this.blu.targetY, 0.15);
+  }
+
+  drawBlu() {
+    push();
+    translate(this.blu.x, this.blu.y);
+    noStroke();
+    fill(0, 50);
+    ellipse(0, 20, 30, 10);
+
+    let jumpHeight = dist(this.blu.x, this.blu.y, this.blu.targetX, this.blu.targetY);
+    let bounce = min(jumpHeight * 0.4, 60);
+    translate(0, -bounce);
+
+    const bluSize = this.blu.size * 2.2;
+    const floatY = sin(frameCount * 0.05) * 5;
+    const breath = sin(frameCount * 0.08) * (bluSize * 0.03);
+    const armSwing = sin(frameCount * 0.1) * 12;
+
+    translate(0, floatY);
+    for (let g = 3; g > 0; g--) {
+      noStroke();
+      fill(100, 160, 255, 12 * g);
+      circle(0, 0, bluSize + g * 12);
+    }
+
+    fill(PALETTE?.blue || color(80, 160, 255));
+    noStroke();
+
+    push();
+    translate(-bluSize * 0.45, 0);
+    rotate(radians(armSwing - 20));
+    ellipse(-bluSize * 0.1, 0, bluSize * 0.25, bluSize * 0.12);
+    pop();
+
+    push();
+    translate(bluSize * 0.45, 0);
+    rotate(radians(-armSwing + 20));
+    ellipse(bluSize * 0.1, 0, bluSize * 0.25, bluSize * 0.12);
+    pop();
+
+    rectMode(CENTER);
+    rect(0, 0, bluSize + breath, bluSize - breath, bluSize * 0.4);
+
+    fill(255, 160, 180, 140);
+    ellipse(-bluSize * 0.28, bluSize * 0.1, bluSize * 0.22, bluSize * 0.14);
+    ellipse(bluSize * 0.28, bluSize * 0.1, bluSize * 0.22, bluSize * 0.14);
+
+    fill(255);
+    ellipse(-bluSize * 0.18, -bluSize * 0.1, bluSize * 0.35, bluSize * 0.35);
+    ellipse(bluSize * 0.18, -bluSize * 0.1, bluSize * 0.35, bluSize * 0.35);
+
+    fill(30);
+    ellipse(-bluSize * 0.18, -bluSize * 0.1, bluSize * 0.18, bluSize * 0.18);
+    ellipse(bluSize * 0.18, -bluSize * 0.1, bluSize * 0.18, bluSize * 0.18);
+
+    fill(255);
+    ellipse(-bluSize * 0.13, -bluSize * 0.14, bluSize * 0.08, bluSize * 0.08);
+    ellipse(bluSize * 0.23, -bluSize * 0.14, bluSize * 0.08, bluSize * 0.08);
+
+    noFill();
+    stroke(30);
+    strokeWeight(max(2, bluSize * 0.035));
+    arc(0, bluSize * 0.12 - (breath * 0.5), bluSize * 0.26, bluSize * 0.16, 0, PI);
+
+    noStroke();
+    fill(255, 220, 60);
+    push();
+    translate(-bluSize * 0.42 - (breath * 0.5), -bluSize * 0.38 + (breath * 0.5));
+
+    let outerRadius = bluSize * 0.09;
+    let innerRadius = bluSize * 0.045;
+    let angle = TWO_PI / 5;
+    let halfAngle = angle / 2.0;
+    beginShape();
+    for (let a = 0; a < TWO_PI; a += angle) {
+      let sx = cos(a - HALF_PI) * outerRadius;
+      let sy = sin(a - HALF_PI) * outerRadius;
+      vertex(sx, sy);
+      sx = cos(a + halfAngle - HALF_PI) * innerRadius;
+      sy = sin(a + halfAngle - HALF_PI) * innerRadius;
+      vertex(sx, sy);
+    }
+    endShape(CLOSE);
+    pop();
+
+    pop();
   }
 
   handleUI() {
