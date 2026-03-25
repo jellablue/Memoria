@@ -1,9 +1,10 @@
 class AgeCard {
-  constructor(x, y, title, subtitle, color, w = 280, h = 280) {
+  constructor(x, y, title, subtitle, color, w = 280, h = 280, description = "") {
     this.x = x;
     this.y = y;
     this.title = title;
     this.subtitle = subtitle;
+    this.description = description;
     this.baseColor = color;
     this.w = w;
     this.h = h;
@@ -69,7 +70,13 @@ class AgeCard {
     fill(130);
     textSize(this.h * 0.07);
     textStyle(NORMAL);
-    text(this.subtitle, 0, this.h * 0.25);
+    text(this.subtitle, 0, this.description ? this.h * 0.22 : this.h * 0.25);
+
+    if (this.description) {
+      fill(110);
+      textSize(this.h * 0.055);
+      text(this.description, 0, this.h * 0.33);
+    }
 
     pop();
     pop();

@@ -21,9 +21,36 @@ class AgeSelectionScreen {
       const gapY = cardH + constrain(height * 0.025, 14, 24);
 
       this.ageCards = [
-        new AgeCard(centerX, startY, "Explorer", "Age 5-12", PALETTE?.green || "#A0EACD", cardW, cardH),
-        new AgeCard(centerX, startY + gapY, "Adventurer", "Age 13-59", PALETTE?.blue || "#B5CDF5", cardW, cardH),
-        new AgeCard(centerX, startY + gapY * 2, "Master", "Age 60+", PALETTE?.pink || "#F6C0D9", cardW, cardH),
+        new AgeCard(
+          centerX,
+          startY,
+          "Explorer",
+          "Age 5-12",
+          PALETTE?.green || "#A0EACD",
+          cardW,
+          cardH,
+          "For kids, young learners"
+        ),
+        new AgeCard(
+          centerX,
+          startY + gapY,
+          "Adventurer",
+          "Age 13-59",
+          PALETTE?.blue || "#B5CDF5",
+          cardW,
+          cardH,
+          "For intermediate gamers"
+        ),
+        new AgeCard(
+          centerX,
+          startY + gapY * 2,
+          "Master",
+          "Age 60+",
+          PALETTE?.pink || "#F6C0D9",
+          cardW,
+          cardH,
+          "Ideal for regular players"
+        ),
       ];
     } else {
       const gap = constrain(width * 0.04, 30, 80);
@@ -32,9 +59,36 @@ class AgeSelectionScreen {
       const startX = (width - totalW) / 2 + cardW / 2;
 
       this.ageCards = [
-        new AgeCard(startX, y, "Explorer", "Beginner", PALETTE?.green || "#A0EACD", cardW, cardH),
-        new AgeCard(startX + cardW + gap, y, "Adventurer", "Intermediate", PALETTE?.blue || "#B5CDF5", cardW, cardH),
-        new AgeCard(startX + (cardW + gap) * 2, y, "Master", "Expert", PALETTE?.pink || "#F6C0D9", cardW, cardH),
+        new AgeCard(
+          startX,
+          y,
+          "Explorer",
+          "Beginner",
+          PALETTE?.green || "#A0EACD",
+          cardW,
+          cardH,
+          "For kids and young learners"
+        ),
+        new AgeCard(
+          startX + cardW + gap,
+          y,
+          "Adventurer",
+          "Intermediate",
+          PALETTE?.blue || "#B5CDF5",
+          cardW,
+          cardH,
+          "Ideal for regular players"
+        ),
+        new AgeCard(
+          startX + (cardW + gap) * 2,
+          y,
+          "Master",
+          "Expert",
+          PALETTE?.pink || "#F6C0D9",
+          cardW,
+          cardH,
+          "For intermediate gamers"
+        ),
       ];
     }
 
